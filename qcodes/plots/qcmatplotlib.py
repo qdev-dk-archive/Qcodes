@@ -8,6 +8,8 @@ from functools import partial
 import matplotlib.pyplot as plt
 from matplotlib.transforms import Bbox
 from matplotlib import cm
+from matplotlib.widgets import Cursor
+
 import numpy as np
 from numpy.ma import masked_invalid, getmask
 from collections import Sequence
@@ -411,3 +413,44 @@ class MatPlot(BasePlot):
         the top is also added for the title.
         """
         self.fig.tight_layout(rect=[0, 0, 1, 0.95])
+
+class ClickWidget:
+    def __init__(self, dataset):
+        self._data = {}
+        BasePlot.expand_trace(args=[dataset], kwargs=self._data)
+        self.fig, self.ax = plt.subplots(2, 2)
+        self.ax[0, 0].pcolormesh(self._data['x'],
+                                 self._data['y'],
+                                 self._data['z'])
+        self._data['xaxis'] = self._data['x'].ndarray[0, :]
+        self._data['yaxis'] = self._data['y'].ndarray
+        self.ax[0, 0].set_xlabel("x")
+        self.ax[0, 0].set_ylabel("y")
+        self.ax[1, 0].set_xlabel("x")
+        self.ax[1, 0].set_ylabel("z")
+        self.ax[1, 0].set_xlim(min(self._data['xaxis']), max(self._data['xaxis']))
+        self.ax[1, 0].set_ylim(0, self._data['z'].max() * 1.05)
+        self.ax[0, 1].set_xlabel("z")
+        self.ax[0, 1].set_ylabel("y")
+        self.ax[0, 1].set_ylim(min(self._data['yaxis']), max(self._data['yaxis']))
+        self.ax[0, 1].set_xlim(0, self._data['z'].max() * 1.05)
+        self._xline = None
+        self._yline = None
+        self._cursor = Cursor(self.ax[0, 0], useblit=True, color='black')
+        self.fig.tight_layout()
+        self.fig.canvas.mpl_connect('button_press_event', self._click)
+
+    def _click(self, event):
+
+        if event.inaxes == self.ax[0, 0]:
+            xpos = (abs(self._data['xaxis'] - event.xdata)).argmin()
+            ypos = (abs(self._data['yaxis'] - event.ydata)).argmin()
+            print("X: {} Y: {}".format(event.xdata, event.ydata))
+            print("Clicked on number {},{}".format(xpos, ypos))
+            if self._xline:
+                self._xline[0].remove()
+            if self._yline:
+                self._yline[0].remove()
+            self._yline = self.ax[0, 1].plot(self._data['z'][:, xpos], self._data['yaxis'], color='C0', marker='.')
+            self._xline = self.ax[1, 0].plot(self._data['xaxis'], self._data['z'][ypos, :], color='C0', marker='.')
+            self.fig.canvas.draw()
