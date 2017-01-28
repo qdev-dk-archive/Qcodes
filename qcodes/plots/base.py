@@ -5,6 +5,8 @@ from IPython.display import display
 
 from qcodes import config
 
+DEFAULT_EXT = config["gui"]["export_format"]
+
 class BasePlot:
 
     """

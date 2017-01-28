@@ -30,7 +30,7 @@
                     ]
                 }
             },
-            "required":[ "legacy_mp", "loglevel" ]
+            "required":[ "legacy_mp", "loglevel", "default_fmt"]
         },
         "gui" : {
             "type" : "object",
@@ -46,6 +46,12 @@
                     "type": "string",
                     "enum": ["QT", "matplotlib" ],
                     "default": "matplotlib"
+                },
+                "export_format":{
+                    "description": "image saving format",
+                    "type": "string",
+                    "enum": ["png", "svg" ],
+                    "default": "svg"
                 }
             },
             "required":[ "notebook", "plotlib" ]

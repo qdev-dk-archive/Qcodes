@@ -7,7 +7,7 @@ import pyqtgraph.multiprocess as pgmp
 import warnings
 from collections import namedtuple
 
-from .base import BasePlot
+from .base import BasePlot, DEFAULT_EXT
 from .colors import color_cycle, colorscales
 
 
@@ -395,16 +395,18 @@ class QtPlot(BasePlot):
         buffer.close()
         return bytes(byte_array._getValue())
     
-    def save(self, filename=None):
+    def save(self, ext=DEFAULT_EXT, filename=None):
         """
-        Save current plot to filename, by default
-        to the location corresponding to the default 
-        title.
+        Save current plot to filename, by default to the location corresponding
+        to the default title, using the file format corresponding to ext.
 
         Args:
+            ext (optional[str]): Extension of the file
             filename (Optional[str]): Location of the file
+
         """
-        default = "{}.png".format(self.get_default_title())
+        default = "{}.{}".format(self.get_default_title(), ext)
         filename = filename or default
         image = self.win.grab()
-        image.save(filename, "PNG", 0)
+        image.save(filename, ext, 0)
+        return image

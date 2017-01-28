@@ -6,7 +6,10 @@
     },
     "gui" :{
         "notebook": true,
-        "plotlib": "matplotlib"
+        "plotlib": "matplotlib",
+        "grid": true,
+        "legend": true,
+        "export_format": "svg"
     },
     "user": {}
 }
