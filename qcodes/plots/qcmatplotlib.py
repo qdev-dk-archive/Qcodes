@@ -452,19 +452,56 @@ class ClickWidget:
                                  "or sums along axis.")
         self.sumbtn = QtWidgets.QCheckBox('Sum')
         self.sumbtn.setToolTip("Display sums or cross sections.")
+        self.savexbtn = QtWidgets.QPushButton('Save X')
+        self.saveybtn = QtWidgets.QPushButton('Save Y')
+
 
         self.crossbtn.toggled.connect(self.toggle_cross)
         self.sumbtn.toggled.connect(self.toggle_sum)
+        self.savexbtn.toggled.connect(self.save_subplot_x)
+        self.saveybtn.toggled.connect(self.save_subplot_y)
+
         self.toggle_cross()
         self.toggle_sum()
 
         vbox.addItem(vspace)
         vbox.addWidget(self.crossbtn)
         vbox.addWidget(self.sumbtn)
+        vbox.addWidget(self.savexbtn)
+        vbox.addWidget(self.saveybtn)
 
         hbox.addLayout(vbox)
 
+    @staticmethod
+    def full_extent(ax, pad=0.0):
+        """Get the full extent of an axes, including axes labels, tick labels, and
+        titles."""
+        # For text objects, we need to draw the figure first, otherwise the extents
+        # are undefined.
+        from matplotlib.transforms import Bbox
+        ax.figure.canvas.draw()
+        items = ax.get_xticklabels() + ax.get_yticklabels()
+        #    items += [ax, ax.title, ax.xaxis.label, ax.yaxis.label]
+        items += [ax, ax.title]
+        bbox = Bbox.union([item.get_window_extent() for item in items])
+
+        return bbox.expanded(1.0 + pad, 1.0 + pad)
+
+    def save_subplot(self, axnumber):
+        extent = self.full_extent(self.ax[axnumber]).transformed(self.fig.dpi_scale_trans.inverted())
+        print("save")
+        self.fig.savefig('{} {} figure.pdf'.format(axnumber[0], axnumber[1]), bbox_inches=extent)
+        print("done saving")
+
+    def save_subplot_x(self):
+        print("SAVE X ")
+        self.save_subplot(axnumber=(0,1))
+
+    def save_subplot_y(self):
+        self.save_subplot(axnumber=(1,0))
+
     def toggle_cross(self):
+        print("toggle cross")
         self.remove_plots()
         self.fig.clear()
         if self._cid:
