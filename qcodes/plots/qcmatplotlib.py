@@ -458,8 +458,8 @@ class ClickWidget:
 
         self.crossbtn.toggled.connect(self.toggle_cross)
         self.sumbtn.toggled.connect(self.toggle_sum)
-        self.savexbtn.toggled.connect(self.save_subplot_x)
-        self.saveybtn.toggled.connect(self.save_subplot_y)
+        self.savexbtn.pressed.connect(self.save_subplot_x)
+        self.saveybtn.pressed.connect(self.save_subplot_y)
 
         self.toggle_cross()
         self.toggle_sum()
