@@ -418,16 +418,22 @@ class MatPlot(BasePlot):
         """
         self.fig.tight_layout(rect=[0, 0, 1, 0.95])
 
-class ClickWidget:
-    def __init__(self, dataset):
-        self._data = {}
-        BasePlot.expand_trace(args=[dataset], kwargs=self._data)
-        self._data['xlabel'] = BasePlot.get_label(self._data['x'])
-        self._data['ylabel'] = BasePlot.get_label(self._data['y'])
-        self._data['zlabel'] = BasePlot.get_label(self._data['z'])
-        self._data['xaxis'] = self._data['x'].ndarray[0, :]
-        self._data['yaxis'] = self._data['y'].ndarray
+class ClickWidget(BasePlot):
 
+    def __init__(self, dataset):
+        super().__init__()
+        data = {}
+        self.expand_trace(args=[dataset], kwargs=data)
+        self.traces = []
+
+        data['xlabel'] = self.get_label(data['x'])
+        data['ylabel'] = self.get_label(data['y'])
+        data['zlabel'] = self.get_label(data['z'])
+        data['xaxis'] = data['x'].ndarray[0, :]
+        data['yaxis'] = data['y'].ndarray
+        self.traces.append({
+            'config': data,
+        })
         self.fig = plt.figure()
 
         self._lines = []
@@ -493,18 +499,22 @@ class ClickWidget:
 
         return bbox.expanded(1.0 + pad, 1.0 + pad)
 
-    def save_subplot(self, axnumber):
+    def save_subplot(self, axnumber, savename, format='pdf'):
         extent = self.full_extent(self.ax[axnumber]).transformed(self.fig.dpi_scale_trans.inverted())
-        self.fig.savefig('{} {} figure.pdf'.format(axnumber[0], axnumber[1]), bbox_inches=extent)
+        full_title =  "{}.{}".format(savename, format)
+        self.fig.savefig(full_title, bbox_inches=extent)
 
     def save_subplot_x(self):
-        self.save_subplot(axnumber=(0,1))
+        title = self.get_default_title() + "0,1"
+        self.save_subplot(axnumber=(0,1), savename=title)
 
     def save_subplot_y(self):
-        self.save_subplot(axnumber=(1,0))
+        title = self.get_default_title() + "1,0"
+        self.save_subplot(axnumber=(1,0), savename=title)
 
     def save_heatmap(self):
-        self.save_subplot(axnumber=(0, 0))
+        title = self.get_default_title() + "0,0"
+        self.save_subplot(axnumber=(0, 0), savename=title)
 
     def toggle_cross(self):
         self.remove_plots()
@@ -530,12 +540,12 @@ class ClickWidget:
             self.ax = np.empty((1, 1), dtype='O')
             self.ax[0, 0] = self.fig.add_subplot(1, 1, 1)
             figure_rect = (0, 0.0, 0.75, 1)
-        self.ax[0, 0].pcolormesh(self._data['x'],
-                                 self._data['y'],
-                                 self._data['z'],
+        self.ax[0, 0].pcolormesh(self.traces[0]['config']['x'],
+                                 self.traces[0]['config']['y'],
+                                 self.traces[0]['config']['z'],
                                  edgecolor='face')
-        self.ax[0, 0].set_xlabel(self._data['xlabel'])
-        self.ax[0, 0].set_ylabel(self._data['ylabel'])
+        self.ax[0, 0].set_xlabel(self.traces[0]['config']['xlabel'])
+        self.ax[0, 0].set_ylabel(self.traces[0]['config']['ylabel'])
         self.fig.tight_layout(rect=figure_rect)
         self.fig.canvas.draw_idle()
 
@@ -545,31 +555,31 @@ class ClickWidget:
             return
         if self.sumbtn.isChecked():
             self._cursor.set_active(False)
-            self.ax[1, 0].set_ylim(0, self._data['z'].sum(axis=0).max() * 1.05)
-            self.ax[0, 1].set_xlim(0, self._data['z'].sum(axis=1).max() * 1.05)
-            self.ax[1, 0].set_xlabel(self._data['xlabel'])
-            self.ax[1, 0].set_ylabel("sum of " + self._data['zlabel'])
-            self.ax[0, 1].set_xlabel("sum of " + self._data['zlabel'])
-            self.ax[0, 1].set_ylabel(self._data['ylabel'])
-            self._lines.append(self.ax[0, 1].plot(self._data['z'].sum(axis=1),
-                                                  self._data['yaxis'],
+            self.ax[1, 0].set_ylim(0, self.traces[0]['config']['z'].sum(axis=0).max() * 1.05)
+            self.ax[0, 1].set_xlim(0, self.traces[0]['config']['z'].sum(axis=1).max() * 1.05)
+            self.ax[1, 0].set_xlabel(self.traces[0]['config']['xlabel'])
+            self.ax[1, 0].set_ylabel("sum of " + self.traces[0]['config']['zlabel'])
+            self.ax[0, 1].set_xlabel("sum of " + self.traces[0]['config']['zlabel'])
+            self.ax[0, 1].set_ylabel(self.traces[0]['config']['ylabel'])
+            self._lines.append(self.ax[0, 1].plot(self.traces[0]['config']['z'].sum(axis=1),
+                                                  self.traces[0]['config']['yaxis'],
                                                   color='C0',
                                                   marker='.')[0])
             self.ax[0, 1].set_title("")
-            self._lines.append(self.ax[1, 0].plot(self._data['xaxis'],
-                                                  self._data['z'].sum(axis=0),
+            self._lines.append(self.ax[1, 0].plot(self.traces[0]['config']['xaxis'],
+                                                  self.traces[0]['config']['z'].sum(axis=0),
                                                   color='C0',
                                                   marker='.')[0])
             self.ax[1, 0].set_title("")
             self._datacursor = mplcursors.cursor(self._lines, multiple=False)
         else:
             self._cursor.set_active(True)
-            self.ax[1, 0].set_xlabel(self._data['xlabel'])
-            self.ax[1, 0].set_ylabel(self._data['zlabel'])
-            self.ax[0, 1].set_xlabel(self._data['zlabel'])
-            self.ax[0, 1].set_ylabel(self._data['ylabel'])
-            self.ax[1, 0].set_ylim(0, self._data['z'].max() * 1.05)
-            self.ax[0, 1].set_xlim(0, self._data['z'].max() * 1.05)
+            self.ax[1, 0].set_xlabel(self.traces[0]['config']['xlabel'])
+            self.ax[1, 0].set_ylabel(self.traces[0]['config']['zlabel'])
+            self.ax[0, 1].set_xlabel(self.traces[0]['config']['zlabel'])
+            self.ax[0, 1].set_ylabel(self.traces[0]['config']['ylabel'])
+            self.ax[1, 0].set_ylim(0, self.traces[0]['config']['z'].max() * 1.05)
+            self.ax[0, 1].set_xlim(0, self.traces[0]['config']['z'].max() * 1.05)
         self.fig.canvas.draw_idle()
 
     def remove_plots(self):
@@ -582,21 +592,23 @@ class ClickWidget:
     def _click(self, event):
 
         if event.inaxes == self.ax[0, 0] and not self.sumbtn.isChecked():
-            xpos = (abs(self._data['xaxis'] - event.xdata)).argmin()
-            ypos = (abs(self._data['yaxis'] - event.ydata)).argmin()
+            xpos = (abs(self.traces[0]['config']['xaxis'] - event.xdata)).argmin()
+            ypos = (abs(self.traces[0]['config']['yaxis'] - event.ydata)).argmin()
             self.remove_plots()
 
-            self._lines.append(self.ax[0, 1].plot(self._data['z'][:, xpos],
-                                                  self._data['yaxis'],
+            self._lines.append(self.ax[0, 1].plot(self.traces[0]['config']['z'][:, xpos],
+                                                  self.traces[0]['config']['yaxis'],
                                                   color='C0',
                                                   marker='.')[0])
-            self.ax[0,1].set_title("{} = {} ".format(self._data['xlabel'], self._data['xaxis'][xpos]),
+            self.ax[0,1].set_title("{} = {} ".format(self.traces[0]['config']['xlabel'],
+                                                     self.traces[0]['config']['xaxis'][xpos]),
                                    fontsize='small')
-            self._lines.append(self.ax[1, 0].plot(self._data['xaxis'],
-                                                  self._data['z'][ypos, :],
+            self._lines.append(self.ax[1, 0].plot(self.traces[0]['config']['xaxis'],
+                                                  self.traces[0]['config']['z'][ypos, :],
                                                   color='C0',
                                                   marker='.')[0])
-            self.ax[1, 0].set_title("{} = {} ".format(self._data['ylabel'], self._data['yaxis'][ypos]),
+            self.ax[1, 0].set_title("{} = {} ".format(self.traces[0]['config']['ylabel'],
+                                                      self.traces[0]['config']['yaxis'][ypos]),
                                     fontsize='small')
             self._datacursor = mplcursors.cursor(self._lines, multiple=False)
             self.fig.canvas.draw_idle()
