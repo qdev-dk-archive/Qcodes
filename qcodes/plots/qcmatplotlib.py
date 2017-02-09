@@ -505,15 +505,25 @@ class ClickWidget(BasePlot):
         self.fig.savefig(full_title, bbox_inches=extent)
 
     def save_subplot_x(self):
-        title = self.get_default_title() + "0,1"
+        title = self.get_default_title()
+        if self.sumbtn.isChecked():
+            title += " sum over {}".format(self.traces[0]['config']['xlabel'])
+        else:
+            title += " cross section {} = {}".format(self.traces[0]['config']['xlabel'],
+                                                     self.traces[0]['config']['xpos'])
         self.save_subplot(axnumber=(0,1), savename=title)
 
     def save_subplot_y(self):
-        title = self.get_default_title() + "1,0"
+        title = self.get_default_title()
+        if self.sumbtn.isChecked():
+            title += " sum over {}".format(self.traces[0]['config']['ylabel'])
+        else:
+            title += " cross section {} = {}".format(self.traces[0]['config']['ylabel'],
+                                                     self.traces[0]['config']['ypos'])
         self.save_subplot(axnumber=(1,0), savename=title)
 
     def save_heatmap(self):
-        title = self.get_default_title() + "0,0"
+        title = self.get_default_title() + " heatmap"
         self.save_subplot(axnumber=(0, 0), savename=title)
 
     def toggle_cross(self):
@@ -553,6 +563,8 @@ class ClickWidget(BasePlot):
         self.remove_plots()
         if not self.crossbtn.isChecked():
             return
+        self.ax[1,0].clear()
+        self.ax[0,1].clear()
         if self.sumbtn.isChecked():
             self._cursor.set_active(False)
             self.ax[1, 0].set_ylim(0, self.traces[0]['config']['z'].sum(axis=0).max() * 1.05)
@@ -603,6 +615,7 @@ class ClickWidget(BasePlot):
             self.ax[0,1].set_title("{} = {} ".format(self.traces[0]['config']['xlabel'],
                                                      self.traces[0]['config']['xaxis'][xpos]),
                                    fontsize='small')
+            self.traces[0]['config']['xpos'] = self.traces[0]['config']['xaxis'][xpos]
             self._lines.append(self.ax[1, 0].plot(self.traces[0]['config']['xaxis'],
                                                   self.traces[0]['config']['z'][ypos, :],
                                                   color='C0',
@@ -610,5 +623,6 @@ class ClickWidget(BasePlot):
             self.ax[1, 0].set_title("{} = {} ".format(self.traces[0]['config']['ylabel'],
                                                       self.traces[0]['config']['yaxis'][ypos]),
                                     fontsize='small')
+            self.traces[0]['config']['ypos'] = self.traces[0]['config']['yaxis'][ypos]
             self._datacursor = mplcursors.cursor(self._lines, multiple=False)
             self.fig.canvas.draw_idle()
