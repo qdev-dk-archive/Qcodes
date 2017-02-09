@@ -452,12 +452,18 @@ class ClickWidget:
                                  "or sums along axis.")
         self.sumbtn = QtWidgets.QCheckBox('Sum')
         self.sumbtn.setToolTip("Display sums or cross sections.")
-        self.savexbtn = QtWidgets.QPushButton('Save X')
-        self.saveybtn = QtWidgets.QPushButton('Save Y')
 
+        self.savehmbtn = QtWidgets.QPushButton('Save Heatmap')
+        self.savehmbtn.setToolTip("Save heatmap as a file (PDF)")
+        self.savexbtn = QtWidgets.QPushButton('Save Vert')
+        self.savexbtn.setToolTip("Save vertical cross section or sum as a file (PDF)")
+        self.saveybtn = QtWidgets.QPushButton('Save Horz')
+        self.savexbtn.setToolTip("Save horizontal cross section or sum as a file (PDF)")
 
         self.crossbtn.toggled.connect(self.toggle_cross)
         self.sumbtn.toggled.connect(self.toggle_sum)
+
+        self.savehmbtn.pressed.connect(self.save_heatmap)
         self.savexbtn.pressed.connect(self.save_subplot_x)
         self.saveybtn.pressed.connect(self.save_subplot_y)
 
@@ -467,6 +473,7 @@ class ClickWidget:
         vbox.addItem(vspace)
         vbox.addWidget(self.crossbtn)
         vbox.addWidget(self.sumbtn)
+        vbox.addWidget(self.savehmbtn)
         vbox.addWidget(self.savexbtn)
         vbox.addWidget(self.saveybtn)
 
@@ -479,7 +486,6 @@ class ClickWidget:
         # For text objects, we need to draw the figure first, otherwise the extents
         # are undefined.
         from matplotlib.transforms import Bbox
-        ax.figure.canvas.draw()
         items = ax.get_xticklabels() + ax.get_yticklabels()
         items += [ax.xaxis.label, ax.yaxis.label]
         items += [ax, ax.title]
@@ -489,15 +495,16 @@ class ClickWidget:
 
     def save_subplot(self, axnumber):
         extent = self.full_extent(self.ax[axnumber]).transformed(self.fig.dpi_scale_trans.inverted())
-        print("save")
         self.fig.savefig('{} {} figure.pdf'.format(axnumber[0], axnumber[1]), bbox_inches=extent)
-        print("done saving")
 
     def save_subplot_x(self):
         self.save_subplot(axnumber=(0,1))
 
     def save_subplot_y(self):
         self.save_subplot(axnumber=(1,0))
+
+    def save_heatmap(self):
+        self.save_subplot(axnumber=(0, 0))
 
     def toggle_cross(self):
         self.remove_plots()
@@ -515,18 +522,21 @@ class ClickWidget:
             self._cid = self.fig.canvas.mpl_connect('button_press_event', self._click)
             self._cursor = Cursor(self.ax[0, 0], useblit=True, color='black')
             self.toggle_sum()
+            figure_rect = (0, 0, 1, 1)
         else:
             self.sumbtn.setEnabled(False)
             self.savexbtn.setEnabled(False)
             self.saveybtn.setEnabled(False)
             self.ax = np.empty((1, 1), dtype='O')
             self.ax[0, 0] = self.fig.add_subplot(1, 1, 1)
+            figure_rect = (0, 0.0, 0.75, 1)
         self.ax[0, 0].pcolormesh(self._data['x'],
                                  self._data['y'],
-                                 self._data['z'])
+                                 self._data['z'],
+                                 edgecolor='face')
         self.ax[0, 0].set_xlabel(self._data['xlabel'])
         self.ax[0, 0].set_ylabel(self._data['ylabel'])
-        self.fig.tight_layout(rect=(0, 0.07, 0.9, 1))
+        self.fig.tight_layout(rect=figure_rect)
         self.fig.canvas.draw_idle()
 
     def toggle_sum(self):
@@ -589,4 +599,4 @@ class ClickWidget:
             self.ax[1, 0].set_title("{} = {} ".format(self._data['ylabel'], self._data['yaxis'][ypos]),
                                     fontsize='small')
             self._datacursor = mplcursors.cursor(self._lines, multiple=False)
-            self.fig.canvas.draw()
+            self.fig.canvas.draw_idle()
