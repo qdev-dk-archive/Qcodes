@@ -73,11 +73,11 @@ def do1d(inst_set, start, stop, division, delay, *inst_meas):
             for k, name in enumerate(i.names):
                 inst_meas_name = "{}_{}".format(i._instrument.name, name)
                 plot.add(getattr(data, inst_meas_name), subplot=j + k + 1)
-                plot.subplots[j].showGrid(True, True)
+                plot.subplots[j+k].showGrid(True, True)
                 if j == 0:
                     plot.subplots[0].setTitle(title)
                 else:
-                    plot.subplots[j].setTitle("")
+                    plot.subplots[j+k].setTitle("")
         else:
             # simple_parameters
             inst_meas_name = "{}_{}".format(i._instrument.name, i.name)
@@ -119,13 +119,24 @@ def do1dDiagonal(inst_set, inst2_set, start, stop, division, delay, start2, slop
     title = "#{0:03d}".format(data.location_provider.counter)
     plot = QtPlot()
     for j, i in enumerate(inst_meas):
-        inst_meas_name = "{}_{}".format(i._instrument.name, i.name)
-        plot.add(getattr(data, inst_meas_name), subplot=j + 1 )
-        plot.subplots[j].showGrid(True, True)
-        if j == 0:
-            plot.subplots[0].setTitle(title)
+        if getattr(i, "names", False):
+            # deal with multi dimenstional parameter
+            for k, name in enumerate(i.names):
+                inst_meas_name = "{}_{}".format(i._instrument.name, name)
+                plot.add(getattr(data, inst_meas_name), subplot=j + k + 1)
+                plot.subplots[j+k].showGrid(True, True)
+                if j == 0:
+                    plot.subplots[0].setTitle(title)
+                else:
+                    plot.subplots[j+k].setTitle("")
         else:
-            plot.subplots[j].setTitle("")
+            inst_meas_name = "{}_{}".format(i._instrument.name, i.name)
+            plot.add(getattr(data, inst_meas_name), subplot=j + 1 )
+            plot.subplots[j].showGrid(True, True)
+            if j == 0:
+                plot.subplots[0].setTitle(title)
+            else:
+                plot.subplots[j].setTitle("")
     try:
         _ = loop.with_bg_task(plot.update, plot.save).run()
     except KeyboardInterrupt:
@@ -154,7 +165,7 @@ def do2d(inst_set, start, stop, division, delay, inst_set2, start2, stop2, divis
 
     """
     for inst in inst_meas:
-        if getattr(inst, "names", False):
+        if getattr(inst, "setpoints", False):
             raise ValueError("3d plotting is not supported")
 
     loop = qc.Loop(inst_set.sweep(start, stop, division), delay).loop(inst_set2.sweep(start2,stop2,division2), delay2).each(
@@ -163,13 +174,24 @@ def do2d(inst_set, start, stop, division, delay, inst_set2, start2, stop2, divis
     title = "#{0:03d}".format(data.location_provider.counter)
     plot = QtPlot()
     for j, i in enumerate(inst_meas):
-        inst_meas_name = "{}_{}".format(i._instrument.name, i.name)
-        plot.add(getattr(data, inst_meas_name), subplot=j + 1)
-        plot.subplots[j].showGrid(True, True)
-        if j == 0:
-            plot.subplots[0].setTitle(title)
+        if getattr(i, "names", False):
+            # deal with multi dimenstional parameter
+            for k, name in enumerate(i.names):
+                inst_meas_name = "{}_{}".format(i._instrument.name, name)
+                plot.add(getattr(data, inst_meas_name), subplot=j + k + 1)
+                plot.subplots[j+k].showGrid(True, True)
+                if j == 0:
+                    plot.subplots[0].setTitle(title)
+                else:
+                    plot.subplots[j+k].setTitle("")
         else:
-            plot.subplots[j].setTitle("")
+            inst_meas_name = "{}_{}".format(i._instrument.name, i.name)
+            plot.add(getattr(data, inst_meas_name), subplot=j + 1)
+            plot.subplots[j].showGrid(True, True)
+            if j == 0:
+                plot.subplots[0].setTitle(title)
+            else:
+                plot.subplots[j].setTitle("")
     try:
         _ = loop.with_bg_task(plot.update, plot.save).run()
     except KeyboardInterrupt:
