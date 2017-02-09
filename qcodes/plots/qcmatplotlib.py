@@ -346,7 +346,7 @@ class ClickWidget:
         from matplotlib.transforms import Bbox
         ax.figure.canvas.draw()
         items = ax.get_xticklabels() + ax.get_yticklabels()
-        #    items += [ax, ax.title, ax.xaxis.label, ax.yaxis.label]
+        items += [ax.xaxis.label, ax.yaxis.label]
         items += [ax, ax.title]
         bbox = Bbox.union([item.get_window_extent() for item in items])
 
@@ -359,20 +359,20 @@ class ClickWidget:
         print("done saving")
 
     def save_subplot_x(self):
-        print("SAVE X ")
         self.save_subplot(axnumber=(0,1))
 
     def save_subplot_y(self):
         self.save_subplot(axnumber=(1,0))
 
     def toggle_cross(self):
-        print("toggle cross")
         self.remove_plots()
         self.fig.clear()
         if self._cid:
             self.fig.canvas.mpl_disconnect(self._cid)
         if self.crossbtn.isChecked():
             self.sumbtn.setEnabled(True)
+            self.savexbtn.setEnabled(True)
+            self.saveybtn.setEnabled(True)
             self.ax = np.empty((2, 2), dtype='O')
             self.ax[0, 0] = self.fig.add_subplot(2, 2, 1)
             self.ax[0, 1] = self.fig.add_subplot(2, 2, 2)
@@ -382,6 +382,8 @@ class ClickWidget:
             self.toggle_sum()
         else:
             self.sumbtn.setEnabled(False)
+            self.savexbtn.setEnabled(False)
+            self.saveybtn.setEnabled(False)
             self.ax = np.empty((1, 1), dtype='O')
             self.ax[0, 0] = self.fig.add_subplot(1, 1, 1)
         self.ax[0, 0].pcolormesh(self._data['x'],
