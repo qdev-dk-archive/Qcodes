@@ -489,12 +489,13 @@ class ClickWidget(BasePlot):
     def full_extent(ax, pad=0.0):
         """Get the full extent of an axes, including axes labels, tick labels, and
         titles."""
-        # For text objects, we need to draw the figure first, otherwise the extents
-        # are undefined.
+        # for text objects we only include them if they are non empty.
+        # empty ticks may be rendered outside the figure
         from matplotlib.transforms import Bbox
         items = ax.get_xticklabels() + ax.get_yticklabels()
-        items += [ax.xaxis.label, ax.yaxis.label]
-        items += [ax, ax.title]
+        items += [ax.xaxis.label, ax.yaxis.label, ax.title]
+        items = [item for item in items if item.get_text()]
+        items.append(ax)
         bbox = Bbox.union([item.get_window_extent() for item in items])
 
         return bbox.expanded(1.0 + pad, 1.0 + pad)
