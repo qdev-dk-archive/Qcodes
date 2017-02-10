@@ -357,7 +357,8 @@ class ClickWidget(BasePlot):
         # for text objects we only include them if they are non empty.
         # empty ticks may be rendered outside the figure
         from matplotlib.transforms import Bbox
-        items = ax.get_xticklabels() + ax.get_yticklabels()
+        items = []
+        #items += ax.get_xticklabels() + ax.get_yticklabels()
         items += [ax.xaxis.label, ax.yaxis.label, ax.title]
         items = [item for item in items if item.get_text()]
         items.append(ax)
