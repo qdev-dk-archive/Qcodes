@@ -31,7 +31,7 @@ class QDac(VisaInstrument):
     # set nonzero value (seconds) to accept older status when reading settings
     max_status_age = 1
 
-    def __init__(self, name, address, num_chans=48):
+    def __init__(self, name, address, num_chans=48, readcurrents=True):
         """
         Instantiates the instrument.
 
@@ -39,6 +39,8 @@ class QDac(VisaInstrument):
             name (str): The instrument name used by qcodes
             address (str): The VISA name of the resource
             num_chans (int): Number of channels to assign. Default: 48
+            readcurrents (bool): Whether to query the currents on startup.
+                Default: True
 
         Returns:
             QDac object
@@ -131,7 +133,7 @@ class QDac(VisaInstrument):
         self.verbose.set(False)
         self.connect_message()
         log.info('[*] Querying all channels for voltages and currents...')
-        self._get_status(readcurrents=True)
+        self._get_status(readcurrents=readcurrents)
         log.info('[+] Done')
 
     #########################
