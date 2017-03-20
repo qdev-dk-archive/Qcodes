@@ -4,9 +4,9 @@ import sys
 import os
 import time
 import json
-import PyQt5.QtWidgets as qt
-import PyQt5.QtGui as gui
-import PyQt5.QtCore as core
+import qtpy.QtWidgets as qt
+import qtpy.QtGui as gui
+import qtpy.QtCore as core
 
 from functools import partial
 from shutil import copyfile
@@ -34,18 +34,14 @@ class MakeDeviceImage(qt.QWidget):
 
         self.imageCanvas = qt.QLabel()
         self.loadButton = qt.QPushButton('Load image')
-        self.labelButton = qt.QPushButton('Insert Label')
-        self.annotButton = qt.QPushButton('Place annotation')
+        self.labelButton = qt.QRadioButton("Insert Label")
+        self.annotButton = qt.QRadioButton('Place annotation')
         self.channelLabel = qt.QLabel('Channel number')
         self.channelNumber = qt.QLineEdit()
         self.okButton = qt.QPushButton('Save and close')
 
         self.loadButton.clicked.connect(self.loadimage)
-        self.labelButton.clicked.connect(partial(self.setlabel_or_annotation,
-                                                 argument='label'))
-        self.annotButton.clicked.connect(partial(self.setlabel_or_annotation,
-                                                 argument='annotation'))
-        self.imageCanvas.mousePressEvent = None
+        self.imageCanvas.mousePressEvent = self.set_label_or_annotation
         self.imageCanvas.setStyleSheet('background-color: red')
         self.okButton.clicked.connect(self.saveAndClose)
 
@@ -69,7 +65,7 @@ class MakeDeviceImage(qt.QWidget):
         fd = qt.QFileDialog()
         filename = fd.getOpenFileName(self, 'Select device image',
                                       os.getcwd(),
-                                      "Image files(*.jpg *png *.jpeg)")
+                                      "Image files(*.jpg *.png *.jpeg)")
         self.filename = filename[0]
         self.pixmap = gui.QPixmap(filename[0])
         width = self.pixmap.width()
@@ -82,23 +78,19 @@ class MakeDeviceImage(qt.QWidget):
         self.imageCanvas.setMaximumWidth(width)
         self.imageCanvas.setMaximumHeight(height)
 
-    def setlabel_or_annotation(self, argument):
-        """
-        Set the position for a channel label or annotation
-        """
+    def set_label_or_annotation(self, event):
 
-        if argument not in ['label', 'annotation']:
-            raise ValueError('Only labels and annotations may be saved!')
+        if not self.channelNumber.text():
+            return
+
+        self.click_x = event.pos().x()
+        self.click_y = event.pos().y()
 
         number = self.channelNumber.text()
-
-        self.imageCanvas.mousePressEvent = self._getpos
-        self.gotclick = False
-        while not self.gotclick:
-            self.qapp.processEvents()
-            time.sleep(0.01)  # Note: too high of a value makes clicking hard
-        self.imageCanvas.mousePressEvent = None
-
+        if self.labelButton.isChecked():
+            argument = 'label'
+        elif self.annotButton.isChecked():
+            argument = 'annotation'
         # update the data
         if number not in self._data.keys():
             self._data[number] = {}
@@ -126,11 +118,6 @@ class MakeDeviceImage(qt.QWidget):
         self.filename = rawpath
 
         self.close()
-
-    def _getpos(self, event):
-        self.gotclick = True
-        self.click_x = event.pos().x()
-        self.click_y = event.pos().y()
 
     @staticmethod
     def _renderImage(data, canvas, filename):
