@@ -38,8 +38,7 @@ class MakeDeviceImage(qt.QWidget):
         self.labelButton = qt.QRadioButton("Insert Label")
         self.labelButton.setChecked(True)
         self.annotButton = qt.QRadioButton('Place annotation')
-        self.channelLabel = qt.QLabel('Channel number')
-        self.channelNumber = qt.QLineEdit()
+
         self.okButton = qt.QPushButton('Save and close')
 
         self.loadButton.clicked.connect(self.loadimage)
@@ -59,8 +58,6 @@ class MakeDeviceImage(qt.QWidget):
         grid.addWidget(self.loadButton, 4, 0)
         grid.addWidget(self.labelButton, 4, 1)
         grid.addWidget(self.annotButton, 4, 2)
-        grid.addWidget(self.channelLabel, 4, 3)
-        grid.addWidget(self.channelNumber, 4, 4, 1, 2)
         grid.addWidget(self.okButton, 4, 9)
         grid.addWidget(self.treeView, 0, 6, 4, 4)
 
@@ -74,6 +71,7 @@ class MakeDeviceImage(qt.QWidget):
         for inst in station.components:
             item = gui.QStandardItem(inst)
             item.setEditable(False)
+            item.setSelectable(False)
             parent.appendRow(item)
             for param in station[inst].parameters:
                 paramitem = gui.QStandardItem(param)
@@ -102,26 +100,29 @@ class MakeDeviceImage(qt.QWidget):
 
     def set_label_or_annotation(self, event):
 
-        if not self.channelNumber.text():
-            return
 
-        print(self.treeView.selectedIndexes()[0])
+        # verify valid
+        if not self.treeView.selectedIndexes():
+            return
+        selected = self.treeView.selectedIndexes()[0]
+        selected_instrument = selected.parent().data()
+        selected_parameter = selected.data()
         self.click_x = event.pos().x()
         self.click_y = event.pos().y()
 
-        number = self.channelNumber.text()
-        if self.labelButton.isChecked():
-            argument = 'label'
-        elif self.annotButton.isChecked():
-            argument = 'annotation'
         # update the data
-        if number not in self._data.keys():
-            self._data[number] = {}
-        self._data[number][argument] = (self.click_x, self.click_y)
-        self._data[number]['value'] = 'Ch. {:02d} mV'.format(int(number))
+        if selected_instrument not in self._data.keys():
+            self._data[selected_instrument] = {}
+        if selected_parameter not in self._data[selected_instrument].keys():
+            self._data[selected_instrument][selected_parameter] = {}
+
+        if self.labelButton.isChecked():
+            self._data[selected_instrument][selected_parameter]['labelpos'] = (self.click_x, self.click_y)
+        elif self.annotButton.isChecked():
+            self._data[selected_instrument][selected_parameter]['annotationpos'] = (self.click_x, self.click_y)
+        self._data[selected_instrument][selected_parameter]['value'] = 'NaN'
 
         # draw it
-
         self.imageCanvas, _ = self._renderImage(self._data,
                                                 self.imageCanvas,
                                                 self.filename)
@@ -152,42 +153,57 @@ class MakeDeviceImage(qt.QWidget):
         width = pixmap.width()
         height = pixmap.height()
 
-        label_size = min(height/10, width/10)
+        label_size = min(height/20, width/20)
+        spacing = int(label_size * 0.2)
 
         painter = gui.QPainter(pixmap)
-        for channum, channel in data.items():
-            chanstr = '{:02}'.format(int(channum))
+        for instrument, parameters in data.items():
+            for parameter, positions in parameters.items():
 
-            if 'label' in channel.keys():
-                (lx, ly) = channel['label']
+                if 'labelpos' in positions:
+                    label_string = "{}_{} ".format(instrument, parameter)
+                    (lx, ly) = positions['labelpos']
+                    painter.setBrush(gui.QColor(255, 255, 255, 100))
 
-                painter.setBrush(gui.QColor(255, 255, 255, 100))
+                    textfont = gui.QFont('Decorative', label_size)
+                    textwidth = gui.QFontMetrics(textfont).width(label_string)
+                    rectangle_start_x = lx - spacing
+                    rectangle_start_y = ly - spacing
+                    rectangle_width = textwidth+2*spacing
+                    rectangle_height = label_size+2*spacing
+                    painter.drawRect(rectangle_start_x,
+                                     rectangle_start_y,
+                                     rectangle_width,
+                                     rectangle_height)
+                    painter.setBrush(gui.QColor(25, 25, 25))
 
-                spacing = int(label_size*0.1)
-                textfont = gui.QFont('Decorative', label_size)
-                textwidth = gui.QFontMetrics(textfont).width(chanstr)
+                    painter.setFont(textfont)
+                    painter.drawText(core.QRectF(rectangle_start_x, rectangle_start_y,
+                                                 rectangle_width, rectangle_height),
+                                     core.Qt.AlignCenter,
+                                     label_string)
 
-                painter.drawRect(lx-spacing, ly-spacing,
-                                 textwidth+2*spacing,
-                                 label_size+2*spacing)
-                painter.setBrush(gui.QColor(25, 25, 25))
+                if 'annotationpos' in positions:
+                    (ax, ay) = positions['annotationpos']
+                    annotationstring = data[instrument][parameter]['value']
 
-                painter.setFont(textfont)
-                painter.drawText(core.QRectF(lx, ly, textwidth,
-                                             label_size),
-                                 chanstr)
-
-            if 'annotation' in channel.keys():
-                (ax, ay) = channel['annotation']
-                painter.setBrush(gui.QColor(255, 255, 255, 100))
-                painter.drawRect(ax, ay, 2.75*label_size, label_size)
-                textfont = gui.QFont('Decorative', 0.5*label_size)
-                painter.setBrush(gui.QColor(50, 50, 50))
-                painter.setFont(textfont)
-                painter.drawText(core.QRectF(ax+2, ay+0.4*label_size,
-                                             3*label_size,
-                                             label_size),
-                                 channel['value'])
+                    textfont = gui.QFont('Decorative', label_size)
+                    textwidth = gui.QFontMetrics(textfont).width(annotationstring)
+                    rectangle_start_x = ax - spacing
+                    rectangle_start_y = ay - spacing
+                    rectangle_width = textwidth + 2 * spacing
+                    rectangle_height = label_size + 2 * spacing
+                    painter.setBrush(gui.QColor(255, 255, 255, 100))
+                    painter.drawRect(rectangle_start_x,
+                                     rectangle_start_y,
+                                     rectangle_width,
+                                     rectangle_height)
+                    painter.setBrush(gui.QColor(50, 50, 50))
+                    painter.setFont(textfont)
+                    painter.drawText(core.QRectF(rectangle_start_x, rectangle_start_y,
+                                                 rectangle_width, rectangle_height),
+                                     core.Qt.AlignCenter,
+                                     annotationstring)
 
             canvas.setPixmap(pixmap)
 
@@ -236,15 +252,14 @@ class DeviceImage:
         with open(filename, 'r') as fid:
             self._data = json.load(fid)
 
-    def updateValues(self, qdac):
+    def updateValues(self, station):
         """
         Update the data with actual voltages from the QDac
         """
-        for channum in self._data.keys():
-            param = qdac.parameters['ch{:02d}_v'.format(int(channum))]
-            voltage = param.get_latest()
-            fmtstr = '{:0.1f} mV'
-            self._data[channum]['value'] = fmtstr.format(1e3*voltage)
+
+        for instrument, parameters in self._data.items():
+            for parameter in parameters.keys():
+                self._data[instrument][parameter]['value'] = str(station.components[instrument][parameter].get_latest())
 
     def makePNG(self, counter):
         """
