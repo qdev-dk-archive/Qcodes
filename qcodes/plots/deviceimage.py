@@ -52,17 +52,17 @@ class MakeDeviceImage(qt.QWidget):
         self.addStation(self.model, station)
         self.treeView.setModel(self.model)
 
-        self.model.setHorizontalHeaderLabels([self.tr("Object")])
+        self.model.setHorizontalHeaderLabels([self.tr("Instruments")])
 
 
-        grid.addWidget(self.imageCanvas, 0, 0, 4, 7)
+        grid.addWidget(self.imageCanvas, 0, 0, 4, 6)
         grid.addWidget(self.loadButton, 4, 0)
         grid.addWidget(self.labelButton, 4, 1)
         grid.addWidget(self.annotButton, 4, 2)
         grid.addWidget(self.channelLabel, 4, 3)
-        grid.addWidget(self.channelNumber, 4, 4)
-        grid.addWidget(self.okButton, 4, 5)
-        grid.addWidget(self.treeView, 4, 6)
+        grid.addWidget(self.channelNumber, 4, 4, 1, 2)
+        grid.addWidget(self.okButton, 4, 9)
+        grid.addWidget(self.treeView, 0, 6, 4, 4)
 
         self.resize(600, 400)
         self.move(100, 100)
