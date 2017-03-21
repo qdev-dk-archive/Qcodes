@@ -16,12 +16,13 @@ class MakeDeviceImage(qt.QWidget):
     Class for clicking and adding labels
     """
 
-    def __init__(self, app, folder):
+    def __init__(self, app, folder, station):
 
         super().__init__()
 
         self.qapp = app
         self.folder = folder
+        self.station = station
 
         # BACKEND
         self._data = {}
@@ -35,6 +36,7 @@ class MakeDeviceImage(qt.QWidget):
         self.imageCanvas = qt.QLabel()
         self.loadButton = qt.QPushButton('Load image')
         self.labelButton = qt.QRadioButton("Insert Label")
+        self.labelButton.setChecked(True)
         self.annotButton = qt.QRadioButton('Place annotation')
         self.channelLabel = qt.QLabel('Channel number')
         self.channelNumber = qt.QLineEdit()
@@ -45,18 +47,38 @@ class MakeDeviceImage(qt.QWidget):
         self.imageCanvas.setStyleSheet('background-color: red')
         self.okButton.clicked.connect(self.saveAndClose)
 
-        grid.addWidget(self.imageCanvas, 0, 0, 4, 6)
+        self.treeView = qt.QTreeView()
+        self.model = gui.QStandardItemModel()
+        self.addStation(self.model, station)
+        self.treeView.setModel(self.model)
+
+        self.model.setHorizontalHeaderLabels([self.tr("Object")])
+
+
+        grid.addWidget(self.imageCanvas, 0, 0, 4, 7)
         grid.addWidget(self.loadButton, 4, 0)
         grid.addWidget(self.labelButton, 4, 1)
         grid.addWidget(self.annotButton, 4, 2)
         grid.addWidget(self.channelLabel, 4, 3)
         grid.addWidget(self.channelNumber, 4, 4)
         grid.addWidget(self.okButton, 4, 5)
+        grid.addWidget(self.treeView, 4, 6)
 
         self.resize(600, 400)
         self.move(100, 100)
         self.setWindowTitle('Generate annotated device image')
         self.show()
+
+    def addStation(self, parent, station):
+
+        for inst in station.components:
+            item = gui.QStandardItem(inst)
+            item.setEditable(False)
+            parent.appendRow(item)
+            for param in station[inst].parameters:
+                paramitem = gui.QStandardItem(param)
+                paramitem.setEditable(False)
+                item.appendRow(paramitem)
 
     def loadimage(self):
         """
@@ -83,6 +105,7 @@ class MakeDeviceImage(qt.QWidget):
         if not self.channelNumber.text():
             return
 
+        print(self.treeView.selectedIndexes()[0])
         self.click_x = event.pos().x()
         self.click_y = event.pos().y()
 
@@ -177,18 +200,19 @@ class DeviceImage:
     Manage an image of a device
     """
 
-    def __init__(self, folder):
+    def __init__(self, folder, station):
 
         self._data = {}
         self.filename = None
         self.folder = folder
+        self.station = station
 
     def annotateImage(self):
         """
         Launch a Qt Widget to click
         """
         app = qt.QApplication(sys.argv)
-        imagedrawer = MakeDeviceImage(app, self.folder)
+        imagedrawer = MakeDeviceImage(app, self.folder, self.station)
         app.exec_()
         self._data = imagedrawer._data
         self.filename = imagedrawer.filename
