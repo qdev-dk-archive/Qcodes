@@ -2,13 +2,11 @@
 
 import sys
 import os
-import time
 import json
 import qtpy.QtWidgets as qt
 import qtpy.QtGui as gui
 import qtpy.QtCore as core
 
-from functools import partial
 from shutil import copyfile
 
 class MakeDeviceImage(qt.QWidget):
@@ -43,16 +41,14 @@ class MakeDeviceImage(qt.QWidget):
 
         self.loadButton.clicked.connect(self.loadimage)
         self.imageCanvas.mousePressEvent = self.set_label_or_annotation
-        self.imageCanvas.setStyleSheet('background-color: red')
+        self.imageCanvas.setStyleSheet('background-color: white')
         self.okButton.clicked.connect(self.saveAndClose)
 
         self.treeView = qt.QTreeView()
         self.model = gui.QStandardItemModel()
+        self.model.setHorizontalHeaderLabels([self.tr("Instruments")])
         self.addStation(self.model, station)
         self.treeView.setModel(self.model)
-
-        self.model.setHorizontalHeaderLabels([self.tr("Instruments")])
-
 
         grid.addWidget(self.imageCanvas, 0, 0, 4, 6)
         grid.addWidget(self.loadButton, 4, 0)
@@ -153,7 +149,7 @@ class MakeDeviceImage(qt.QWidget):
         width = pixmap.width()
         height = pixmap.height()
 
-        label_size = min(height/20, width/20)
+        label_size = min(height/30, width/30)
         spacing = int(label_size * 0.2)
 
         painter = gui.QPainter(pixmap)
