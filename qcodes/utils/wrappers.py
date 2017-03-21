@@ -6,6 +6,8 @@ import logging
 
 from qcodes.plots.pyqtgraph import QtPlot
 from qcodes.plots.qcmatplotlib import MatPlot
+from qcodes_device_annotator import DeviceImage
+
 from IPython import get_ipython
 
 CURRENT_EXPERIMENT  = {}
@@ -65,6 +67,15 @@ def init(mainfolder:str, sample_name: str, plot_x_position=0.66):
         else:
             logging.debug("Logging already started at {}".format(logfile))
 
+def init_device_image(station):
+    # TODO handle default station
+    di = DeviceImage(CURRENT_EXPERIMENT["exp_folder"], station)
+    try:
+        di.loadAnnotations()
+    except:
+        di.annotateImage()
+    CURRENT_EXPERIMENT['device_image'] = di
+    CURRENT_EXPERIMENT['station'] = station
 
 def _plot_setup(data, inst_meas, useQT=True):
     title = "{} #{:03d}".format(CURRENT_EXPERIMENT["sample_name"], data.location_provider.counter)
@@ -158,6 +169,11 @@ def do1d(inst_set, start, stop, division, delay, *inst_meas):
     except KeyboardInterrupt:
         print("Measurement Interrupted")
     _save_individual_plots(data, inst_meas)
+    if CURRENT_EXPERIMENT.get('device_image'):
+        print("saving device image {}".format(CURRENT_EXPERIMENT["provider"].counter))
+        CURRENT_EXPERIMENT['device_image'].updateValues(CURRENT_EXPERIMENT['station'])
+        CURRENT_EXPERIMENT['device_image'].makePNG(CURRENT_EXPERIMENT["provider"].counter,
+                                                   CURRENT_EXPERIMENT["exp_folder"])
     return plot, data
 
 
