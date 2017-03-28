@@ -6,7 +6,7 @@ import logging
 
 from qcodes.plots.pyqtgraph import QtPlot
 from qcodes.plots.qcmatplotlib import MatPlot
-from qcodes_device_annotator import DeviceImage
+from qcodes.utils.qcodes_device_annotator import DeviceImage
 
 from IPython import get_ipython
 
