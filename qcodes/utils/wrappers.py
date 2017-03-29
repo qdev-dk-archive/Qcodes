@@ -2,6 +2,7 @@ import qcodes as qc
 from os.path import abspath
 from os.path import sep
 from os import makedirs
+import os
 import logging
 
 from qcodes.plots.pyqtgraph import QtPlot
@@ -14,7 +15,8 @@ CURRENT_EXPERIMENT = {}
 CURRENT_EXPERIMENT["logging_enabled"] = False
 
 
-def init(mainfolder:str, sample_name: str, plot_x_position=0.66):
+def init(mainfolder:str, sample_name: str, station, plot_x_position=0.66,
+         annotate_image=True):
     """
 
     Args:
@@ -68,8 +70,19 @@ def init(mainfolder:str, sample_name: str, plot_x_position=0.66):
         else:
             logging.debug("Logging already started at {}".format(logfile))
 
-def init_device_image(station):
-    # TODO handle default station
+    # Annotate image if wanted and necessary
+    if annotate_image:
+        exp_f = CURRENT_EXPERIMENT['exp_folder']
+        raw_img = [f for f in os.listdir(exp_f) if 'deviceimage_raw' in f]
+        raw_img_ready = (len(raw_img) > 0)
+        json_ready = os.path.exists(os.path.join(exp_f,
+                                                 'deviceimage_annotations.json'))
+        if (not(raw_img_ready) or not(json_ready)):
+            _init_device_image(station)
+
+
+def _init_device_image(station):
+
     di = DeviceImage(CURRENT_EXPERIMENT["exp_folder"], station)
     try:
         di.loadAnnotations()
@@ -77,6 +90,7 @@ def init_device_image(station):
         di.annotateImage()
     CURRENT_EXPERIMENT['device_image'] = di
     CURRENT_EXPERIMENT['station'] = station
+
 
 def _select_plottables(tasks):
     """
@@ -162,10 +176,12 @@ def _save_individual_plots(data, inst_meas):
             plot.subplots[0].grid()
             plot.save("{}_{:03d}.pdf".format(plot.get_default_title(), counter_two))
 
+
 def save_device_image():
     CURRENT_EXPERIMENT['device_image'].updateValues(CURRENT_EXPERIMENT['station'])
     CURRENT_EXPERIMENT['device_image'].makePNG(CURRENT_EXPERIMENT["provider"].counter,
                                                CURRENT_EXPERIMENT["exp_folder"])
+
 
 def do1d(inst_set, start, stop, division, delay, *inst_meas):
     """
@@ -194,7 +210,7 @@ def do1d(inst_set, start, stop, division, delay, *inst_meas):
         print("Measurement Interrupted")
 
     _save_individual_plots(data, plottables)
-    
+
     if CURRENT_EXPERIMENT.get('device_image'):
         save_device_image()
 
