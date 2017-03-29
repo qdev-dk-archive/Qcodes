@@ -56,6 +56,8 @@ def init(mainfolder:str, sample_name: str, station, plot_x_position=0.66,
     qc.data.data_set.DataSet.location_provider = loc_provider
     CURRENT_EXPERIMENT["provider"] = loc_provider
 
+    CURRENT_EXPERIMENT['station'] = station
+
     ipython = get_ipython()
     # turn on logging only if in ipython
     # else crash and burn
@@ -72,13 +74,7 @@ def init(mainfolder:str, sample_name: str, station, plot_x_position=0.66,
 
     # Annotate image if wanted and necessary
     if annotate_image:
-        exp_f = CURRENT_EXPERIMENT['exp_folder']
-        raw_img = [f for f in os.listdir(exp_f) if 'deviceimage_raw' in f]
-        raw_img_ready = (len(raw_img) > 0)
-        json_ready = os.path.exists(os.path.join(exp_f,
-                                                 'deviceimage_annotations.json'))
-        if (not(raw_img_ready) or not(json_ready)):
-            _init_device_image(station)
+        _init_device_image(station)
 
 
 def _init_device_image(station):
@@ -89,7 +85,6 @@ def _init_device_image(station):
     except:
         di.annotateImage()
     CURRENT_EXPERIMENT['device_image'] = di
-    CURRENT_EXPERIMENT['station'] = station
 
 
 def _select_plottables(tasks):
@@ -178,9 +173,16 @@ def _save_individual_plots(data, inst_meas):
 
 
 def save_device_image():
-    CURRENT_EXPERIMENT['device_image'].updateValues(CURRENT_EXPERIMENT['station'])
-    CURRENT_EXPERIMENT['device_image'].makePNG(CURRENT_EXPERIMENT["provider"].counter,
-                                               CURRENT_EXPERIMENT["exp_folder"])
+    counter = CURRENT_EXPERIMENT['provider'].counter
+    di = CURRENT_EXPERIMENT['device_image']
+    di.updateValues(CURRENT_EXPERIMENT['station'])
+
+    print(os.path.join(CURRENT_EXPERIMENT["exp_folder"],
+                       '{:03d}'.format(counter)))
+
+    di.makePNG(CURRENT_EXPERIMENT["provider"].counter,
+               os.path.join(CURRENT_EXPERIMENT["exp_folder"],
+                            '{:03d}'.format(counter)))
 
 
 def do1d(inst_set, start, stop, division, delay, *inst_meas):
@@ -212,6 +214,7 @@ def do1d(inst_set, start, stop, division, delay, *inst_meas):
     _save_individual_plots(data, plottables)
 
     if CURRENT_EXPERIMENT.get('device_image'):
+        print('Saving an image')
         save_device_image()
 
     return plot, data
