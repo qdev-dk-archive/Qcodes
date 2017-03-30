@@ -49,7 +49,8 @@ class MakeDeviceImage(qt.QWidget):
         self.model.setHorizontalHeaderLabels([self.tr("Instruments")])
         self.addStation(self.model, station)
         self.treeView.setModel(self.model)
-
+        self.treeView.sortByColumn(0, core.Qt.AscendingOrder)
+        self.treeView.setSortingEnabled(True)
         grid.addWidget(self.imageCanvas, 0, 0, 4, 6)
         grid.addWidget(self.loadButton, 4, 0)
         grid.addWidget(self.labelButton, 4, 1)
@@ -73,7 +74,6 @@ class MakeDeviceImage(qt.QWidget):
                 paramitem = gui.QStandardItem(param)
                 paramitem.setEditable(False)
                 item.appendRow(paramitem)
-            item.sortChildren(0)
 
     def loadimage(self):
         """
