@@ -262,7 +262,16 @@ class DeviceImage:
 
         for instrument, parameters in self._data.items():
             for parameter in parameters.keys():
-                self._data[instrument][parameter]['value'] = str(station.components[instrument][parameter].get_latest())
+                value = station.components[instrument][parameter].get_latest()
+                try:
+                    floatvalue = float(station.components[instrument][parameter].get_latest())
+                    if floatvalue > 1000 or floatvalue < 0.1:
+                        valuestr = "{:.2e}".format(floatvalue)
+                    else:
+                        valuestr = "{:.2f}".format(floatvalue)
+                except ValueError:
+                    valuestr = str(value)
+                self._data[instrument][parameter]['value'] = valuestr
 
     def makePNG(self, counter, path=None):
         """
