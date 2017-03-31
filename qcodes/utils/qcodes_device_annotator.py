@@ -4,9 +4,9 @@ import sys
 import os
 import json
 import glob
-import qtpy.QtWidgets as qt
-import qtpy.QtGui as gui
-import qtpy.QtCore as core
+import PyQt5.QtWidgets as qt
+import PyQt5.QtGui as gui
+import PyQt5.QtCore as core
 
 from shutil import copyfile
 
