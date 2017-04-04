@@ -208,9 +208,10 @@ def do1d(inst_set, start, stop, num_points, delay, *inst_meas):
     plottables = _select_plottables(inst_meas)
     plot = _plot_setup(data, plottables)
     try:
-        _ = loop.with_bg_task(plot.update, plot.save).run()
+        _ = loop.with_bg_task(plot.update).run()
     except KeyboardInterrupt:
         print("Measurement Interrupted")
+    plot.save()
     _save_individual_plots(data, plottables)
     if CURRENT_EXPERIMENT.get('device_image'):
         log.debug('Saving device image')
@@ -243,9 +244,10 @@ def do1dDiagonal(inst_set, inst2_set, start, stop, num_points, delay, start2, sl
     plottables = _select_plottables(inst_meas)
     plot = _plot_setup(data, plottables)
     try:
-        _ = loop.with_bg_task(plot.update, plot.save).run()
+        _ = loop.with_bg_task(plot.update).run()
     except KeyboardInterrupt:
         print("Measurement Interrupted")
+    plot.save()
     _save_individual_plots(data, plottables)
     if CURRENT_EXPERIMENT.get('device_image'):
         save_device_image()
@@ -282,9 +284,10 @@ def do2d(inst_set, start, stop, num_points, delay, inst_set2, start2, stop2, num
     plottables = _select_plottables(inst_meas)
     plot = _plot_setup(data, plottables)
     try:
-        _ = loop.with_bg_task(plot.update, plot.save).run()
+        _ = loop.with_bg_task(plot.update).run()
     except KeyboardInterrupt:
         print("Measurement Interrupted")
+    plot.save()
     _save_individual_plots(data, plottables)
     if CURRENT_EXPERIMENT.get('device_image'):
         save_device_image()
