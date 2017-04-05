@@ -170,7 +170,7 @@ def _save_individual_plots(data, inst_meas):
                 inst_meta_data = {}
                 plot.expand_trace((inst_meas_data_copy,), kwargs=inst_meta_data)
                 if 'z' in inst_meta_data:
-                    plot.add(inst_meas_data)
+                    plot.add(inst_meas_data, rasterized=True)
                 else:
                     plot.add(inst_meas_data, color=color)
                 plot.subplots[0].set_title(title)
@@ -189,7 +189,7 @@ def _save_individual_plots(data, inst_meas):
             inst_meta_data = {}
             plot.expand_trace((inst_meas_data_copy,), kwargs=inst_meta_data)
             if 'z' in inst_meta_data:
-                plot.add(inst_meas_data)
+                plot.add(inst_meas_data, rasterized=True)
             else:
                 plot.add(inst_meas_data, color=color)
             plot.subplots[0].set_title(title)
