@@ -173,8 +173,8 @@ def _save_individual_plots(data, inst_meas):
                     plot.add(inst_meas_data, rasterized=True)
                 else:
                     plot.add(inst_meas_data, color=color)
+                    plot.subplots[0].grid()
                 plot.subplots[0].set_title(title)
-                plot.subplots[0].grid()
                 plot.save("{}_{:03d}.pdf".format(plot.get_default_title(), counter_two))
         else:
             # Step the color on all subplots no just on plots within the same axis/subplot
@@ -192,8 +192,8 @@ def _save_individual_plots(data, inst_meas):
                 plot.add(inst_meas_data, rasterized=True)
             else:
                 plot.add(inst_meas_data, color=color)
+                plot.subplots[0].grid()
             plot.subplots[0].set_title(title)
-            plot.subplots[0].grid()
             plot.save("{}_{:03d}.pdf".format(plot.get_default_title(), counter_two))
 
 
