@@ -223,9 +223,12 @@ class MakeDeviceImage(qt.QWidget):
                         label_string = paramsettings.get('labelstring')
                     else:
                         label_string = "{}_{} ".format(instrument, parameter)
+                    if paramsettings.get('update'):
+                        #parameters that are sweeped should be red.
+                        painter.setBrush(gui.QColor(255, 0, 0, 100))
+                    else:
+                        painter.setBrush(gui.QColor(255, 255, 255, 100))
                     (lx, ly) = paramsettings['labelpos']
-                    painter.setBrush(gui.QColor(255, 255, 255, 100))
-
                     textfont = gui.QFont('Decorative', label_size)
                     textwidth = gui.QFontMetrics(textfont).width(label_string)
                     rectangle_start_x = lx - spacing
@@ -319,7 +322,7 @@ class DeviceImage:
         with open(json_filename, 'r') as fid:
             self._data = json.load(fid)
 
-    def updateValues(self, station):
+    def updateValues(self, station, sweeptparameters=None):
         """
         Update the data with actual voltages from the QDac
         """
@@ -338,6 +341,10 @@ class DeviceImage:
                 except (ValueError, TypeError):
                     valuestr = str(value)
                 self._data[instrument][parameter]['value'] = valuestr
+                if sweeptparameters:
+                    for sweeptparameter in sweeptparameters:
+                        if sweeptparameter._instrument.name == instrument and sweeptparameter.name == parameter:
+                            self._data[instrument][parameter]['update'] = True
 
     def makePNG(self, counter, path=None, title=None):
         """

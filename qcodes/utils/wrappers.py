@@ -222,11 +222,11 @@ def _save_individual_plots(data, inst_meas):
             plot.save("{}_{:03d}.pdf".format(plot.get_default_title(), counter_two))
 
 
-def save_device_image():
+def save_device_image(sweeptparameters):
     counter = CURRENT_EXPERIMENT['provider'].counter
     title = "{} #{:03d}".format(CURRENT_EXPERIMENT["sample_name"], counter)
     di = CURRENT_EXPERIMENT['device_image']
-    di.updateValues(CURRENT_EXPERIMENT['station'])
+    di.updateValues(CURRENT_EXPERIMENT['station'], sweeptparameters)
 
     log.debug(os.path.join(CURRENT_EXPERIMENT["exp_folder"],
                        '{:03d}'.format(counter)))
@@ -271,7 +271,7 @@ def do1d(inst_set, start, stop, num_points, delay, *inst_meas):
         _save_individual_plots(data, plottables)
     if CURRENT_EXPERIMENT.get('device_image'):
         log.debug('Saving device image')
-        save_device_image()
+        save_device_image((inst_set,))
 
     # add the measurement ID to the logfile
     with open(CURRENT_EXPERIMENT['logfile'], 'a') as fid:
@@ -318,7 +318,7 @@ def do1dDiagonal(inst_set, inst2_set, start, stop, num_points, delay, start2, sl
         _save_individual_plots(data, plottables)
     pdfplot.save("{}.pdf".format(plot.get_default_title()))
     if CURRENT_EXPERIMENT.get('device_image'):
-        save_device_image()
+        save_device_image((inst_set, inst2_set))
 
     # add the measurement ID to the logfile
     with open(CURRENT_EXPERIMENT['logfile'], 'a') as fid:
@@ -371,7 +371,7 @@ def do2d(inst_set, start, stop, num_points, delay, inst_set2, start2, stop2, num
         _save_individual_plots(data, plottables)
     pdfplot.save("{}.pdf".format(plot.get_default_title()))
     if CURRENT_EXPERIMENT.get('device_image'):
-        save_device_image()
+        save_device_image((inst_set, inst_set2))
 
     # add the measurement ID to the logfile
     with open(CURRENT_EXPERIMENT['logfile'], 'a') as fid:
