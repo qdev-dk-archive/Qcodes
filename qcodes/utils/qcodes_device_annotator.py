@@ -36,6 +36,8 @@ class MakeDeviceImage(qt.QWidget):
         self.loadButton = qt.QPushButton('Load image')
 
         self.okButton = qt.QPushButton('Save and close')
+        self.removeButton = qt.QPushButton('Remove')
+        self.removeButton.setToolTip("Remove annotation and label for this parameter")
         self.labeltitle = qt.QLabel('Label:')
         self.labelfield = qt.QLineEdit()
         self.labelfield.setText('')
@@ -53,6 +55,7 @@ class MakeDeviceImage(qt.QWidget):
         self.imageCanvas.mousePressEvent = self.set_label_or_annotation
         self.imageCanvas.setStyleSheet('background-color: white')
         self.okButton.clicked.connect(self.saveAndClose)
+        self.removeButton.clicked.connect(self.remove_label_and_annotation)
 
         self.treeView = qt.QTreeView()
         self.model = gui.QStandardItemModel()
@@ -68,6 +71,7 @@ class MakeDeviceImage(qt.QWidget):
         grid.addWidget(self.labelfield, 4, 2)
         grid.addWidget(self.formattertitle, 4, 4)
         grid.addWidget(self.formatterfield, 4, 5)
+        grid.addWidget(self.removeButton, 4, 8)
         grid.addWidget(self.okButton, 4, 9)
         grid.addWidget(self.treeView, 0, 6, 4, 4)
 
@@ -150,6 +154,17 @@ class MakeDeviceImage(qt.QWidget):
             else:
                 self._data[selected_instrument][selected_parameter]['value'] = 'NaN'
 
+        # draw it
+        self.imageCanvas, _ = self._renderImage(self._data,
+                                                self.imageCanvas,
+                                                self.filename)
+
+    def remove_label_and_annotation(self):
+        selected = self.treeView.selectedIndexes()[0]
+        selected_instrument = selected.parent().data()
+        selected_parameter = selected.data()
+        if selected_parameter in self._data[selected_instrument].keys():
+            self._data[selected_instrument][selected_parameter] = {}
         # draw it
         self.imageCanvas, _ = self._renderImage(self._data,
                                                 self.imageCanvas,
