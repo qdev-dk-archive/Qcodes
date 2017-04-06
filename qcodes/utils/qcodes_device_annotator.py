@@ -201,14 +201,14 @@ class MakeDeviceImage(qt.QWidget):
                              title)
 
         for instrument, parameters in data.items():
-            for parameter, positions in parameters.items():
+            for parameter, paramsettings in parameters.items():
 
-                if 'labelpos' in positions:
-                    if positions.get('labelstring'):
-                        label_string = positions.get('labelstring')
+                if 'labelpos' in paramsettings:
+                    if paramsettings.get('labelstring'):
+                        label_string = paramsettings.get('labelstring')
                     else:
                         label_string = "{}_{} ".format(instrument, parameter)
-                    (lx, ly) = positions['labelpos']
+                    (lx, ly) = paramsettings['labelpos']
                     painter.setBrush(gui.QColor(255, 255, 255, 100))
 
                     textfont = gui.QFont('Decorative', label_size)
@@ -229,9 +229,9 @@ class MakeDeviceImage(qt.QWidget):
                                      core.Qt.AlignCenter,
                                      label_string)
 
-                if 'annotationpos' in positions:
-                    (ax, ay) = positions['annotationpos']
-                    annotationstring = positions['value']
+                if 'annotationpos' in paramsettings:
+                    (ax, ay) = paramsettings['annotationpos']
+                    annotationstring = paramsettings['value']
 
                     textfont = gui.QFont('Decorative', label_size)
                     textwidth = gui.QFontMetrics(textfont).width(annotationstring)
