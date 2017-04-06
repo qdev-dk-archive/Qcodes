@@ -32,6 +32,7 @@ class MakeDeviceImage(qt.QWidget):
         self.setLayout(grid)
 
         self.imageCanvas = qt.QLabel()
+        self.imageCanvas.setToolTip("Left click to insert a label and right click to insert an annotation.")
         self.loadButton = qt.QPushButton('Load image')
 
         self.okButton = qt.QPushButton('Save and close')
