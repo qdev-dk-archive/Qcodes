@@ -144,9 +144,11 @@ class MakeDeviceImage(qt.QWidget):
         elif insertannotation:
             self._data[selected_instrument][selected_parameter]['annotationpos'] = (self.click_x, self.click_y)
             if self.formatterfield.text():
-                self._data[selected_instrument][selected_parameter]['annotationformatter'] = \
-                    '{' + self.formatterfield.text() + "}"
-            self._data[selected_instrument][selected_parameter]['value'] = 'NaN'
+                formatstring  = '{' + self.formatterfield.text() + "}"
+                self._data[selected_instrument][selected_parameter]['annotationformatter'] = formatstring
+                self._data[selected_instrument][selected_parameter]['value'] = formatstring
+            else:
+                self._data[selected_instrument][selected_parameter]['value'] = 'NaN'
 
         # draw it
         self.imageCanvas, _ = self._renderImage(self._data,
