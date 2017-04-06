@@ -36,7 +36,19 @@ class MakeDeviceImage(qt.QWidget):
         self.loadButton = qt.QPushButton('Load image')
 
         self.okButton = qt.QPushButton('Save and close')
-
+        self.labeltitle = qt.QLabel('Label:')
+        self.labelfield = qt.QLineEdit()
+        self.labelfield.setText('')
+        self.labelfield.setToolTip("String to be used as label. Defaults to instrument_parameter")
+        self.formattertitle = qt.QLabel('Formatter:')
+        self.formatterfield = qt.QLineEdit()
+        self.formatterfield.setText('')
+        self.formatterfield.setToolTip("Formatter to be used for this parameter:\n"
+                                       "Uses new style python formatters. I.e.\n"
+                                       "':.4f' standard formatter with 4 digits after the decimal point\n"
+                                       "':.2e' exponential formatter with 2 digits after the decimal point\n"
+                                       "Leave blank for default. \n"
+                                       "See www.pyformat.info for more examples")
         self.loadButton.clicked.connect(self.loadimage)
         self.imageCanvas.mousePressEvent = self.set_label_or_annotation
         self.imageCanvas.setStyleSheet('background-color: white')
@@ -49,8 +61,13 @@ class MakeDeviceImage(qt.QWidget):
         self.treeView.setModel(self.model)
         self.treeView.sortByColumn(0, core.Qt.AscendingOrder)
         self.treeView.setSortingEnabled(True)
+        self.treeView.clicked.connect(self.selection_changed)
         grid.addWidget(self.imageCanvas, 0, 0, 4, 6)
         grid.addWidget(self.loadButton, 4, 0)
+        grid.addWidget(self.labeltitle, 4, 1)
+        grid.addWidget(self.labelfield, 4, 2)
+        grid.addWidget(self.formattertitle, 4, 4)
+        grid.addWidget(self.formatterfield, 4, 5)
         grid.addWidget(self.okButton, 4, 9)
         grid.addWidget(self.treeView, 0, 6, 4, 4)
 
@@ -91,6 +108,14 @@ class MakeDeviceImage(qt.QWidget):
         self.imageCanvas.setMaximumWidth(width)
         self.imageCanvas.setMaximumHeight(height)
 
+    def selection_changed(self):
+        if not self.treeView.selectedIndexes():
+            return
+        selected = self.treeView.selectedIndexes()[0]
+        selected_instrument = selected.parent().data()
+        selected_parameter = selected.data()
+        self.labelfield.setText("{}_{} ".format(selected_instrument, selected_parameter))
+
     def set_label_or_annotation(self, event):
         insertlabel = False
         insertannotation = False
@@ -115,9 +140,13 @@ class MakeDeviceImage(qt.QWidget):
 
         if insertlabel:
             self._data[selected_instrument][selected_parameter]['labelpos'] = (self.click_x, self.click_y)
+            self._data[selected_instrument][selected_parameter]['labelstring'] = self.labelfield.text()
         elif insertannotation:
             self._data[selected_instrument][selected_parameter]['annotationpos'] = (self.click_x, self.click_y)
-        self._data[selected_instrument][selected_parameter]['value'] = 'NaN'
+            if self.formatterfield.text():
+                self._data[selected_instrument][selected_parameter]['annotationformatter'] = \
+                    '{' + self.formatterfield.text() + "}"
+            self._data[selected_instrument][selected_parameter]['value'] = 'NaN'
 
         # draw it
         self.imageCanvas, _ = self._renderImage(self._data,
@@ -173,7 +202,10 @@ class MakeDeviceImage(qt.QWidget):
             for parameter, positions in parameters.items():
 
                 if 'labelpos' in positions:
-                    label_string = "{}_{} ".format(instrument, parameter)
+                    if positions.get('labelstring'):
+                        label_string = positions.get('labelstring')
+                    else:
+                        label_string = "{}_{} ".format(instrument, parameter)
                     (lx, ly) = positions['labelpos']
                     painter.setBrush(gui.QColor(255, 255, 255, 100))
 
@@ -197,7 +229,7 @@ class MakeDeviceImage(qt.QWidget):
 
                 if 'annotationpos' in positions:
                     (ax, ay) = positions['annotationpos']
-                    annotationstring = data[instrument][parameter]['value']
+                    annotationstring = positions['value']
 
                     textfont = gui.QFont('Decorative', label_size)
                     textwidth = gui.QFontMetrics(textfont).width(annotationstring)
@@ -280,7 +312,9 @@ class DeviceImage:
                 value = station.components[instrument][parameter].get_latest()
                 try:
                     floatvalue = float(station.components[instrument][parameter].get_latest())
-                    if floatvalue > 1000 or floatvalue < 0.1:
+                    if self._data[instrument][parameter].get('annotationformatter'):
+                        valuestr = self._data[instrument][parameter].get('annotationformatter').format(floatvalue)
+                    elif floatvalue > 1000 or floatvalue < 0.1:
                         valuestr = "{:.2e}".format(floatvalue)
                     else:
                         valuestr = "{:.2f}".format(floatvalue)
