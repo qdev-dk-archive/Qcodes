@@ -33,9 +33,6 @@ class MakeDeviceImage(qt.QWidget):
 
         self.imageCanvas = qt.QLabel()
         self.loadButton = qt.QPushButton('Load image')
-        self.labelButton = qt.QRadioButton("Insert Label")
-        self.labelButton.setChecked(True)
-        self.annotButton = qt.QRadioButton('Place annotation')
 
         self.okButton = qt.QPushButton('Save and close')
 
@@ -53,8 +50,6 @@ class MakeDeviceImage(qt.QWidget):
         self.treeView.setSortingEnabled(True)
         grid.addWidget(self.imageCanvas, 0, 0, 4, 6)
         grid.addWidget(self.loadButton, 4, 0)
-        grid.addWidget(self.labelButton, 4, 1)
-        grid.addWidget(self.annotButton, 4, 2)
         grid.addWidget(self.okButton, 4, 9)
         grid.addWidget(self.treeView, 0, 6, 4, 4)
 
@@ -96,8 +91,12 @@ class MakeDeviceImage(qt.QWidget):
         self.imageCanvas.setMaximumHeight(height)
 
     def set_label_or_annotation(self, event):
-
-
+        insertlabel = False
+        insertannotation = False
+        if event.button() == core.Qt.LeftButton:
+            insertlabel = True
+        elif event.button() == core.Qt.RightButton:
+            insertannotation = True
         # verify valid
         if not self.treeView.selectedIndexes():
             return
@@ -113,9 +112,9 @@ class MakeDeviceImage(qt.QWidget):
         if selected_parameter not in self._data[selected_instrument].keys():
             self._data[selected_instrument][selected_parameter] = {}
 
-        if self.labelButton.isChecked():
+        if insertlabel:
             self._data[selected_instrument][selected_parameter]['labelpos'] = (self.click_x, self.click_y)
-        elif self.annotButton.isChecked():
+        elif insertannotation:
             self._data[selected_instrument][selected_parameter]['annotationpos'] = (self.click_x, self.click_y)
         self._data[selected_instrument][selected_parameter]['value'] = 'NaN'
 
