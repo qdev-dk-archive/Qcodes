@@ -272,9 +272,9 @@ def do1d(inst_set, start, stop, num_points, delay, *inst_meas):
         save_device_image((inst_set,))
 
     # add the measurement ID to the logfile
-    with open(CURRENT_EXPERIMENT['logfile'], 'a') as fid:
-        print("#[QCoDeS]# Saved dataset to: {}".format(data.location),
-              file=fid)
+    ipython = get_ipython()
+    ipython.logger.log_write("#[QCoDeS]# Saved dataset to: {}".format(data.location), kind='output')
+
     return plot, data
 
 
@@ -319,9 +319,8 @@ def do1dDiagonal(inst_set, inst2_set, start, stop, num_points, delay, start2, sl
         save_device_image((inst_set, inst2_set))
 
     # add the measurement ID to the logfile
-    with open(CURRENT_EXPERIMENT['logfile'], 'a') as fid:
-        print("#[QCoDeS]# Saved dataset to: {}".format(data.location),
-              file=fid)
+    ipython = get_ipython()
+    ipython.logger.log_write("#[QCoDeS]# Saved dataset to: {}".format(data.location), kind='output')
 
     return plot, data
 
@@ -372,9 +371,8 @@ def do2d(inst_set, start, stop, num_points, delay, inst_set2, start2, stop2, num
         save_device_image((inst_set, inst_set2))
 
     # add the measurement ID to the logfile
-    with open(CURRENT_EXPERIMENT['logfile'], 'a') as fid:
-        print("#[QCoDeS]# Saved dataset to: {}".format(data.location),
-              file=fid)
+    ipython = get_ipython()
+    ipython.logger.log_write("#[QCoDeS]# Saved dataset to: {}".format(data.location), kind='output')
 
     return plot, data
 
