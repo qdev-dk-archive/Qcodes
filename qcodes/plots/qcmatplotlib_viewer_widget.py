@@ -95,20 +95,24 @@ class ClickWidget(BasePlot):
 
     def save_subplot_x(self):
         title = self.get_default_title()
+        label, unit = self._get_label_and_unit(self.traces[0]['config']['xlabel'])
         if self.sumbtn.isChecked():
-            title += " sum over {}".format(self.traces[0]['config']['xlabel'])
+            title += " sum over {}".format(label)
         else:
-            title += " cross section {} = {}".format(self.traces[0]['config']['xlabel'],
-                                                     self.traces[0]['config']['xpos'])
+            title += " cross section {} = {} {}".format(label,
+                                                        self.traces[0]['config']['xpos'],
+                                                        unit)
         self.save_subplot(axnumber=(0, 1), savename=title)
 
     def save_subplot_y(self):
         title = self.get_default_title()
+        label, unit = self._get_label_and_unit(self.traces[0]['config']['ylabel'])
         if self.sumbtn.isChecked():
-            title += " sum over {}".format(self.traces[0]['config']['ylabel'])
+            title += " sum over {}".format(label)
         else:
-            title += " cross section {} = {}".format(self.traces[0]['config']['ylabel'],
-                                                     self.traces[0]['config']['ypos'])
+            title += " cross section {} = {} {}".format(label,
+                                                        self.traces[0]['config']['xpos'],
+                                                        unit)
         self.save_subplot(axnumber=(1, 0), savename=title)
 
     def save_heatmap(self):
@@ -120,12 +124,21 @@ class ClickWidget(BasePlot):
         if type(label) == tuple and len(label) == 2:
             label, unit = label
         else:
-            unit = None
+            unit = ""
         axsetter = getattr(ax, "set_{}label".format(axletter))
         if extra:
             axsetter(extra + "{} ({})".format(label, unit))
         else:
             axsetter("{} ({})".format(label, unit))
+
+    @staticmethod
+    def _get_label_and_unit(config):
+        if type(config) == tuple and len(config) == 2:
+            label, unit = config
+        else:
+            unit = ""
+            label = config
+        return label, unit
 
     def toggle_cross(self):
         self.remove_plots()
@@ -217,16 +230,16 @@ class ClickWidget(BasePlot):
                                                   self.traces[0]['config']['yaxis'],
                                                   color='C0',
                                                   marker='.')[0])
-            self.ax[0, 1].set_title("{} = {} ".format(self.traces[0]['config']['xlabel'],
-                                                      self.traces[0]['config']['xaxis'][xpos]),
+            xlabel, xunit = self._get_label_and_unit(self.traces[0]['config']['xlabel'])
+            self.ax[0, 1].set_title("{} = {} {} ".format(xlabel, self.traces[0]['config']['xaxis'][xpos], xunit),
                                     fontsize='small')
             self.traces[0]['config']['xpos'] = self.traces[0]['config']['xaxis'][xpos]
             self._lines.append(self.ax[1, 0].plot(self.traces[0]['config']['xaxis'],
                                                   self.traces[0]['config']['z'][ypos, :],
                                                   color='C0',
                                                   marker='.')[0])
-            self.ax[1, 0].set_title("{} = {} ".format(self.traces[0]['config']['ylabel'],
-                                                      self.traces[0]['config']['yaxis'][ypos]),
+            ylabel, yunit = self._get_label_and_unit(self.traces[0]['config']['ylabel'])
+            self.ax[1, 0].set_title("{} = {} {}".format(ylabel, self.traces[0]['config']['yaxis'][ypos], yunit),
                                     fontsize='small')
             self.traces[0]['config']['ypos'] = self.traces[0]['config']['yaxis'][ypos]
             self._datacursor = mplcursors.cursor(self._lines, multiple=False)
