@@ -3,13 +3,10 @@ Live plotting in Jupyter notebooks
 using the nbagg backend and matplotlib
 """
 from collections import Mapping
-from functools import partial
 
 import matplotlib.pyplot as plt
 from matplotlib.transforms import Bbox
 from matplotlib import cm
-
-
 import numpy as np
 from numpy.ma import masked_invalid, getmask
 from collections import Sequence
