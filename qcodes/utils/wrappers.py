@@ -204,8 +204,8 @@ def _save_individual_plots(data, inst_meas):
             plot.subplots[0].set_title(title + rasterized_note)
         else:
             plot.subplots[0].set_title(title)
-        plot.save("{}_{:03d}.pdf".format(plot.get_default_title(), counter_two))
-
+        plot.save("{}_{:03d}.pdf".format(plot.get_default_title(),
+                                         counter_two))
 
     counter_two = 0
     for j, i in enumerate(inst_meas):
@@ -218,24 +218,25 @@ def _save_individual_plots(data, inst_meas):
             _create_plot(i, i.name, data, counter_two)
             counter_two += 1
 
+
 def _flush_buffers(*params):
-"""
-If possible, flush the VISA buffer of the instrument of the
-provided parameters.
+    """
+    If possible, flush the VISA buffer of the instrument of the
+    provided parameters.
 
-Supposed to be called inside doNd like so:
-_flush_buffers(inst_set, *inst_meas)
-"""
+    Supposed to be called inside doNd like so:
+    _flush_buffers(inst_set, *inst_meas)
+    """
 
-for param in params:
-    if hasattr(param, '_instrument'):
-        inst = param._instrument
-        if hasattr(inst, 'visa_handle'):
-            status_code = inst.visa_handle.clear()
-            if status_code is not None:
-                log.warning("Cleared visa buffer on "
-                            "{} with status code {}".format(inst.name,
-                                                            status_code))
+    for param in params:
+        if hasattr(param, '_instrument'):
+            inst = param._instrument
+            if hasattr(inst, 'visa_handle'):
+                status_code = inst.visa_handle.clear()
+                if status_code is not None:
+                    log.warning("Cleared visa buffer on "
+                                "{} with status code {}".format(inst.name,
+                                                                status_code))
 
 
 def save_device_image(sweeptparameters):
@@ -245,7 +246,7 @@ def save_device_image(sweeptparameters):
     di.updateValues(CURRENT_EXPERIMENT['station'], sweeptparameters)
 
     log.debug(os.path.join(CURRENT_EXPERIMENT["exp_folder"],
-                       '{:03d}'.format(counter)))
+                           '{:03d}'.format(counter)))
 
     di.makePNG(CURRENT_EXPERIMENT["provider"].counter,
                os.path.join(CURRENT_EXPERIMENT["exp_folder"],
@@ -374,7 +375,7 @@ def do2d(inst_set, start, stop, num_points, delay, inst_set2, start2, stop2, num
     """
 
     # try to flush VISA buffers at the beginning of a measurement
-    _flush_buffers(inst_set, *inst_meas)
+    _flush_buffers(inst_set, inst_set2, *inst_meas)
 
     for inst in inst_meas:
         if getattr(inst, "setpoints", False):
