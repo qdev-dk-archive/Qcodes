@@ -322,7 +322,7 @@ def do1dDiagonal(inst_set, inst2_set, start, stop, num_points, delay, start2, sl
     """
 
     # try to flush VISA buffers at the beginning of a measurement
-    _flush_buffers(inst_set, *inst_meas)
+    _flush_buffers(inst_set, inst2_set, *inst_meas)
 
     loop = qc.Loop(inst_set.sweep(start, stop, num=num_points), delay).each(
         qc.Task(inst2_set, (inst_set) * slope + (slope * start - start2)), *inst_meas, inst2_set)
