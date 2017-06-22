@@ -358,7 +358,6 @@ class ZNB20(VisaInstrument):
                 getattr(self, 'power{}{}'.format(i, j))(-50)
 
     def initialise(self):
-        self.write('*RST')
         for n in range(1,5):
             self.write('SENS{}:SWE:TYPE LIN'.format(n))
             self.write('SENS{}:SWE:TIME:AUTO ON'.format(n))
