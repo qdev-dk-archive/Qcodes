@@ -65,7 +65,7 @@ class FrequencySweepMagPhase(MultiParameter):
         # instrument averages over its last 'avg' number of sweeps
         # need to ensure averaged result is returned
         for avgcount in range(getattr(self._instrument, 'avg{}{}'.format(*self._sindex))()):
-                self._instrument.write('INIT{}:IMM; *WAI'.format(self._channel))
+            self._instrument.write('INIT{}:IMM; *WAI'.format(self._channel))
         data_str = self._instrument.ask('CALC{}:DATA? SDAT'.format(self._channel)).split(',')
         data_list = [float(v) for v in data_str]
 
