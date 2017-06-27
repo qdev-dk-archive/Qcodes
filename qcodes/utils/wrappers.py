@@ -413,55 +413,16 @@ def do1d(inst_set, start, stop, num_points, delay, *inst_meas, do_plots=True):
 
     """
 
-    # try to flush VISA buffers at the beginning of a measurement
-    _flush_buffers(inst_set, *inst_meas)
-
-    # make a variable for auto pre-scaling the plot
-    startranges = {inst_set.label: (start, stop)}
-
-    interrupted = False
     loop = qc.Loop(inst_set.sweep(start,
                                   stop,
                                   num=num_points), delay).each(*inst_meas)
-    data = loop.get_data_set()
 
-    plottables = _select_plottables(inst_meas)
-    if do_plots:
-        plot, _ = _plot_setup(data, plottables, startranges=startranges)
-    else:
-        plot = None
-    try:
-        if do_plots:
-            _ = loop.with_bg_task(plot.update).run()
-        else:
-            _ = loop.run()
-    except KeyboardInterrupt:
-        interrupted = True
-        print("Measurement Interrupted")
-    if do_plots:
-        # Ensure the correct scaling before saving
-        for subplot in plot.subplots:
-            vBox = subplot.getViewBox()
-            vBox.enableAutoRange(vBox.XYAxes)
-        plot.save()
-        pdfplot, num_subplots = _plot_setup(data, plottables, useQT=False)
-        # pad a bit more to prevent overlap between
-        # suptitle and title
-        pdfplot.fig.tight_layout(pad=3)
-        pdfplot.save("{}.pdf".format(plot.get_default_title()))
-        pdfplot.fig.canvas.draw()
-        if num_subplots > 1:
-            _save_individual_plots(data, plottables)
-    if CURRENT_EXPERIMENT.get('device_image'):
-        log.debug('Saving device image')
-        save_device_image((inst_set,))
+    set_params = (inst_set, start, stop),
+    meas_params = inst_meas
 
-    # add the measurement ID to the logfile
-    with open(CURRENT_EXPERIMENT['logfile'], 'a') as fid:
-        print("#[QCoDeS]# Saved dataset to: {}".format(data.location),
-              file=fid)
-    if interrupted:
-        raise KeyboardInterrupt
+    plot, data = _do_measurement(loop, set_params, meas_params,
+                                 do_plots=do_plots)
+
     return plot, data
 
 
