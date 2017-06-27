@@ -1,16 +1,14 @@
-import qcodes as qc
 from os.path import abspath
 from os.path import sep
 from os import makedirs
 import os
 import logging
 from copy import deepcopy
-from collections import namedtuple
-import matplotlib.pyplot as plt
 import numpy as np
+from typing import Optional
 
-from time import sleep
-
+import qcodes as qc
+from qcodes.loops import Loop
 from qcodes.plots.pyqtgraph import QtPlot
 from qcodes.plots.qcmatplotlib import MatPlot
 from qcodes.utils.qcodes_device_annotator import DeviceImage
@@ -289,7 +287,7 @@ def _save_individual_plots(data, inst_meas):
 def _flush_buffers(*params):
     """
     If possible, flush the VISA buffer of the instrument of the
-    provided parameters.
+    provided parameters. The params can be instruments as well.
 
     Supposed to be called inside doNd like so:
     _flush_buffers(inst_set, *inst_meas)
@@ -304,6 +302,13 @@ def _flush_buffers(*params):
                     log.warning("Cleared visa buffer on "
                                 "{} with status code {}".format(inst.name,
                                                                 status_code))
+        elif isinstance(param, VisaInstrument):
+            inst = param
+            status_code = inst.visa_handle.clear()
+            if status_code is not None:
+                log.warning("Cleared visa buffer on "
+                            "{} with status code {}".format(inst.name,
+                                                            status_code))
 
 
 def save_device_image(sweeptparameters):
@@ -318,6 +323,74 @@ def save_device_image(sweeptparameters):
     di.makePNG(CURRENT_EXPERIMENT["provider"].counter,
                os.path.join(CURRENT_EXPERIMENT["exp_folder"],
                             '{:03d}'.format(counter)), title)
+
+
+def _do_measurement(loop: Loop, set_params: tuple, meas_params: tuple,
+                    do_plots: Optional[bool]=True):
+    """
+    The function to handle all the auxiliary magic of the T10 users, e.g.
+    their plotting specifications, the device image annotation etc.
+
+    If ax3 is None, ax2 is considered the data axis (non-setpoint).
+
+    Args:
+        loop: The QCoDeS loop object describing the actual measurement
+        set_params: tuple of tuples. Each tuple is of the form
+            (param, start, stop)
+        meas_params: tuple of parameters to measure
+
+    """
+    parameters = [sp[0] for sp in set_params] + list(meas_params)
+    _flush_buffers(*parameters)
+
+    # startranges for _plot_setup
+    startranges = dict(zip((sp[0].label for sp in set_params),
+                           ((sp[1], sp[2]) for sp in set_params)))
+
+    interrupted = False
+
+    data = loop.get_data_set()
+
+    # this is always the identity operation, is it not?
+    plottables = _select_plottables(meas_params)
+
+    if do_plots:
+        plot, _ = _plot_setup(data, plottables, startranges=startranges)
+    else:
+        plot = None
+    try:
+        if do_plots:
+            _ = loop.with_bg_task(plot.update).run()
+        else:
+            _ = loop.run()
+    except KeyboardInterrupt:
+        interrupted = True
+        print("Measurement Interrupted")
+    if do_plots:
+        # Ensure the correct scaling before saving
+        for subplot in plot.subplots:
+            vBox = subplot.getViewBox()
+            vBox.enableAutoRange(vBox.XYAxes)
+        plot.save()
+        pdfplot, num_subplots = _plot_setup(data, plottables, useQT=False)
+        # pad a bit more to prevent overlap between
+        # suptitle and title
+        pdfplot.fig.tight_layout(pad=3)
+        pdfplot.save("{}.pdf".format(plot.get_default_title()))
+        pdfplot.fig.canvas.draw()
+        if num_subplots > 1:
+            _save_individual_plots(data, plottables)
+    if CURRENT_EXPERIMENT.get('device_image'):
+        log.debug('Saving device image')
+        save_device_image(tuple(sp[0] for sp in set_params))
+
+    # add the measurement ID to the logfile
+    with open(CURRENT_EXPERIMENT['logfile'], 'a') as fid:
+        print("#[QCoDeS]# Saved dataset to: {}".format(data.location),
+              file=fid)
+    if interrupted:
+        raise KeyboardInterrupt
+    return plot, data
 
 
 def do1d(inst_set, start, stop, num_points, delay, *inst_meas, do_plots=True):
