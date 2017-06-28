@@ -35,7 +35,7 @@ def init(mainfolder: str, sample_name: str, station, plot_x_position=0.66,
 
     """
     if sep in sample_name:
-        raise TypeError("Use Relative names. That is wihtout {}".format(sep))
+        raise TypeError("Use Relative names. That is without {}".format(sep))
     # always remove trailing sep in the main folder
     if mainfolder[-1] == sep:
         mainfolder = mainfolder[:-1]
@@ -103,7 +103,7 @@ def _select_plottables(tasks):
     A task is here understood to be anything that the qc.Loop 'each' can eat.
     """
     # allow passing a single task
-    if not isinstance(tasks, tuple):
+    if not hasattr(tasks, '__iter__'):
         tasks = (tasks,)
 
     # is the following check necessary AND sufficient?
@@ -334,8 +334,8 @@ def _do_measurement(loop: Loop, set_params: tuple, meas_params: tuple,
     """
     The function to handle all the auxiliary magic of the T10 users, e.g.
     their plotting specifications, the device image annotation etc.
-
-    If ax3 is None, ax2 is considered the data axis (non-setpoint).
+    The input loop should just be a loop ready to run and perform the desired
+    measurement. The two params tuple are used for plotting.
 
     Args:
         loop: The QCoDeS loop object describing the actual measurement
@@ -357,11 +357,8 @@ def _do_measurement(loop: Loop, set_params: tuple, meas_params: tuple,
 
     data = loop.get_data_set()
 
-    # this is always the identity operation, is it not?
-    plottables = _select_plottables(meas_params)
-
     if do_plots:
-        plot, _ = _plot_setup(data, plottables, startranges=startranges)
+        plot, _ = _plot_setup(data, meas_params, startranges=startranges)
     else:
         plot = None
     try:
@@ -378,14 +375,14 @@ def _do_measurement(loop: Loop, set_params: tuple, meas_params: tuple,
             vBox = subplot.getViewBox()
             vBox.enableAutoRange(vBox.XYAxes)
         plot.save()
-        pdfplot, num_subplots = _plot_setup(data, plottables, useQT=False)
+        pdfplot, num_subplots = _plot_setup(data, meas_params, useQT=False)
         # pad a bit more to prevent overlap between
         # suptitle and title
         pdfplot.fig.tight_layout(pad=3)
         pdfplot.save("{}.pdf".format(plot.get_default_title()))
         pdfplot.fig.canvas.draw()
         if num_subplots > 1:
-            _save_individual_plots(data, plottables)
+            _save_individual_plots(data, meas_params)
     if CURRENT_EXPERIMENT.get('device_image'):
         log.debug('Saving device image')
         save_device_image(tuple(sp[0] for sp in set_params))
@@ -424,7 +421,7 @@ def do1d(inst_set, start, stop, num_points, delay, *inst_meas, do_plots=True):
                                   num=num_points), delay).each(*inst_meas)
 
     set_params = (inst_set, start, stop),
-    meas_params = inst_meas
+    meas_params = _select_plottables(inst_meas)
 
     plot, data = _do_measurement(loop, set_params, meas_params,
                                  do_plots=do_plots)
@@ -458,7 +455,7 @@ def do1dDiagonal(inst_set, inst2_set, start, stop, num_points,
     # (WilliamHPNielsen) If I understand do1dDiagonal correctly, the inst2_set
     # is supposed to be varied secretly in the background
     set_params = ((inst_set, start, stop),)
-    meas_params = inst_meas
+    meas_params = _select_plottables(inst_meas)
 
     slope_task = qc.Task(inst2_set, (inst_set)*slope+(slope*start-start2))
 
@@ -511,7 +508,7 @@ def do2d(inst_set, start, stop, num_points, delay,
 
     set_params = ((inst_set, start, stop),
                   (inst_set2, start2, stop2))
-    meas_params = inst_meas
+    meas_params = _select_plottables(inst_meas)
 
     plot, data = _do_measurement(outerloop, set_params, meas_params,
                                  do_plots=do_plots)
