@@ -171,7 +171,6 @@ def _plot_setup(data, inst_meas, useQT=True, startranges=None):
                        if d == checkstring][0]
 
             # Disable autoscale for the measured data
-            print('Considering the units {}, {}'.format(thedata.unit, i.unit))
             if thedata.unit not in standardunits:
                 subplot = plot.subplots[j+k]
                 try:
