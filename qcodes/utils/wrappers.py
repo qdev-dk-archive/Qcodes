@@ -166,8 +166,7 @@ def _plot_setup(data, inst_meas, useQT=True, startranges=None):
             tdict = {'bottom': 'setXRange', 'left': 'setYRange'}
             # now find the data (not setpoint)
             checkstring = '{}_{}'.format(i._instrument.name, i.name)
-            print('DEBUG')
-            print([d for d in data.arrays.keys()], checkstring)
+
             thedata = [data.arrays[d] for d in data.arrays.keys()
                        if d == checkstring][0]
 
