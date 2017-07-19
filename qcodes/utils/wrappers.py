@@ -120,7 +120,7 @@ def _select_plottables(tasks):
     return tuple(plottables)
 
 
-def _plot_setup(data, inst_meas, useQT=True, startranges=None):
+def _plot_setup(data, inst_meas, useQT=True, startranges=None, axis=None):
     title = "{} #{:03d}".format(CURRENT_EXPERIMENT["sample_name"],
                                 data.location_provider.counter)
     rasterized_note = " rasterized plot"
@@ -136,7 +136,7 @@ def _plot_setup(data, inst_meas, useQT=True, startranges=None):
     else:
         plot = MatPlot(subplots=(1, num_subplots))
 
-    def _create_plot(plot, i, name, data, counter_two, j, k):
+    def _create_plot(plot, i, name, data, counter_two, j, k, axis=None):
         """
         Args:
             plot: The plot object, either QtPlot() or MatPlot()
@@ -147,6 +147,7 @@ def _plot_setup(data, inst_meas, useQT=True, startranges=None):
                 number and each sub-measurement has a counter.
             j: The current sub-measurement
             k: -
+            axis: If the data needs to be plotted against a different axis such as a part of a combined parameter.
         """
         color = 'C' + str(counter_two)
         counter_two += 1
@@ -154,7 +155,10 @@ def _plot_setup(data, inst_meas, useQT=True, startranges=None):
         inst_meas_data = getattr(data, inst_meas_name)
         inst_meta_data = __get_plot_type(inst_meas_data, plot)
         if useQT:
-            plot.add(inst_meas_data, subplot=j + k + 1)
+            if axis:
+                plot.add(*axis, inst_meas_data, subplot=j + k + 1)
+            else:
+                plot.add(inst_meas_data, subplot=j + k + 1)
             plot.subplots[j + k].showGrid(True, True)
             if j == 0:
                 plot.subplots[0].setTitle(title)
@@ -193,43 +197,55 @@ def _plot_setup(data, inst_meas, useQT=True, startranges=None):
                     ax.setLabel(text=thedata.label, unit=thedata.unit,
                                 unitPrefix='')
 
+            def set_setpoint_limits(axis):
+                for setarr in axis:
+                    subplot = plot.subplots[j + k]
+                    ax = subplot.getAxis(whatwhere[setarr.label])
+                    # check for autoscaling
+                    if setarr.unit not in standardunits:
+                        ax.enableAutoSIPrefix(False)
+                        # At this point, it has already been decided that
+                        # the scale is milli whatever
+                        # (the default empty plot is from -0.5 to 0.5)
+                        # so we must undo that
+                        ax.setScale(1e-3)
+                        ax.setLabel(text=setarr.label, unit=setarr.unit,
+                                    unitPrefix='')
+                    # set the axis ranges
+                    if not (np.all(np.isnan(setarr))):
+                        # In this case the setpoints are "baked" into the param
+                        rangesetter = getattr(subplot.getViewBox(),
+                                              tdict[whatwhere[setarr.label]])
+                        rangesetter(setarr.min(), setarr.max())
+                    else:
+                        # in this case someone must tell _create_plot what the
+                        # range should be. We get it from startranges
+                        rangesetter = getattr(subplot.getViewBox(),
+                                              tdict[whatwhere[setarr.label]])
+                        (rmin, rmax) = startranges[setarr.label]
+                        rangesetter(rmin, rmax)
             # Set up axis scaling
-            for setarr in thedata.set_arrays:
-                subplot = plot.subplots[j+k]
-                ax = subplot.getAxis(whatwhere[setarr.label])
-                # check for autoscaling
-                if setarr.unit not in standardunits:
-                    ax.enableAutoSIPrefix(False)
-                    # At this point, it has already been decided that
-                    # the scale is milli whatever
-                    # (the default empty plot is from -0.5 to 0.5)
-                    # so we must undo that
-                    ax.setScale(1e-3)
-                    ax.setLabel(text=setarr.label, unit=setarr.unit,
-                                unitPrefix='')
-                # set the axis ranges
-                if not(np.all(np.isnan(setarr))):
-                    # In this case the setpoints are "baked" into the param
-                    rangesetter = getattr(subplot.getViewBox(),
-                                          tdict[whatwhere[setarr.label]])
-                    rangesetter(setarr.min(), setarr.max())
-                else:
-                    # in this case someone must tell _create_plot what the
-                    # range should be. We get it from startranges
-                    rangesetter = getattr(subplot.getViewBox(),
-                                          tdict[whatwhere[setarr.label]])
-                    (rmin, rmax) = startranges[setarr.label]
-                    rangesetter(rmin, rmax)
+            if axis:
+                set_setpoint_limits(axis)
+            else:
+                set_setpoint_limits(thedata.set_arrays)
 
         else:
             if 'z' in inst_meta_data:
                 xlen, ylen = inst_meta_data['z'].shape
                 rasterized = xlen*ylen > 5000
-                plot.add(inst_meas_data, subplot=j + k + 1,
-                         rasterized=rasterized)
+                if axis:
+                    plot.add(*axis, inst_meas_data, subplot=j + k + 1,
+                             rasterized=rasterized)
+                else:
+                    plot.add(inst_meas_data, subplot=j + k + 1,
+                             rasterized=rasterized)
             else:
                 rasterized = False
-                plot.add(inst_meas_data, subplot=j + k + 1, color=color)
+                if axis:
+                    plot.add(*axis, inst_meas_data, subplot=j + k + 1, color=color)
+                else:
+                    plot.add(inst_meas_data, subplot=j + k + 1, color=color)
                 plot.subplots[j + k].grid()
             if j == 0:
                 if rasterized:
@@ -248,11 +264,17 @@ def _plot_setup(data, inst_meas, useQT=True, startranges=None):
         if getattr(i, "names", False):
             # deal with multidimensional parameter
             for k, name in enumerate(i.names):
-                _create_plot(plot, i, name, data, counter_two, j, k)
+                myax = None
+                if axis:
+                    myax = axis[j+k]
+                _create_plot(plot, i, name, data, counter_two, j, k, axis=myax)
                 counter_two += 1
         else:
             # simple_parameters
-            _create_plot(plot, i, i.name, data, counter_two, j, 0)
+            myax = None
+            if axis:
+                myax = axis[j]
+            _create_plot(plot, i, i.name, data, counter_two, j, 0, axis=myax)
             counter_two += 1
     return plot, num_subplots
 
@@ -267,9 +289,9 @@ def __get_plot_type(data, plot):
     return metadata
 
 
-def _save_individual_plots(data, inst_meas, display_plot=True):
+def _save_individual_plots(data, inst_meas, display_plot=True, axis=None):
 
-    def _create_plot(i, name, data, counter_two, display_plot=True):
+    def _create_plot(i, name, data, counter_two, display_plot=True, axis=None):
         # Step the color on all subplots no just on plots
         # within the same axis/subplot
         # this is to match the qcodes-pyqtplot behaviour.
@@ -285,10 +307,16 @@ def _save_individual_plots(data, inst_meas, display_plot=True):
         if 'z' in inst_meta_data:
             xlen, ylen = inst_meta_data['z'].shape
             rasterized = xlen * ylen > 5000
-            plot.add(inst_meas_data, rasterized=rasterized)
+            if axis:
+                plot.add(*axis, inst_meas_data, rasterized=rasterized)
+            else:
+                plot.add(inst_meas_data, rasterized=rasterized)
         else:
             rasterized = False
-            plot.add(inst_meas_data, color=color)
+            if axis:
+                plot.add(*axis, inst_meas_data, color=color)
+            else:
+                plot.add(inst_meas_data, color=color)
             plot.subplots[0].grid()
         if rasterized:
             plot.subplots[0].set_title(title + rasterized_note)
@@ -299,8 +327,7 @@ def _save_individual_plots(data, inst_meas, display_plot=True):
         title = sep.join(title_list)
         _rescale_mpl_axes(plot)
         plot.tight_layout()
-        plot.save("{}_{:03d}.pdf".format(title,
-                                         counter_two))
+        plot.save("{}_{:03d}.pdf".format(title, counter_two))
         if display_plot:
             plot.fig.canvas.draw()
             plt.show()
@@ -312,10 +339,16 @@ def _save_individual_plots(data, inst_meas, display_plot=True):
         if getattr(i, "names", False):
             # deal with multidimensional parameter
             for k, name in enumerate(i.names):
-                _create_plot(i, name, data, counter_two, display_plot)
+                myax = None
+                if axis:
+                    myax = axis[j+k]
+                _create_plot(i, name, data, counter_two, display_plot, axis=myax)
                 counter_two += 1
         else:
-            _create_plot(i, i.name, data, counter_two, display_plot)
+            myax = None
+            if axis:
+                myax = axis[j]
+            _create_plot(i, i.name, data, counter_two, display_plot, axis=myax)
             counter_two += 1
 
 
