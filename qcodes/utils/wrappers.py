@@ -392,7 +392,6 @@ def _do_measurement(loop: Loop, set_params: tuple, meas_params: tuple,
         # resize histogram
         for trace in plot.traces:
             if 'plot_object' in trace.keys():
-                print(type(trace['plot_object']))
                 if (isinstance(trace['plot_object'], dict) and
                             'hist' in trace['plot_object'].keys()):
                     cmap = trace['plot_object']['cmap']
