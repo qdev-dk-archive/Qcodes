@@ -3,6 +3,7 @@ Live plotting in Jupyter notebooks
 using the nbagg backend and matplotlib
 """
 from collections import Mapping
+from functools import partial
 
 import matplotlib.pyplot as plt
 from matplotlib.transforms import Bbox
