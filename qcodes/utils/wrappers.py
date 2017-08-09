@@ -53,12 +53,16 @@ def init(mainfolder: str, sample_name: str, station, plot_x_position=0.66,
 
     path_to_experiment_folder = sep.join([mainfolder, sample_name, ""])
     CURRENT_EXPERIMENT["exp_folder"] = path_to_experiment_folder
-
+    CURRENT_EXPERIMENT['pdf_subfolder'] = 'pdf'
     try:
         makedirs(path_to_experiment_folder)
     except FileExistsError:
         pass
-
+    try:
+        makedirs(sep.join([mainfolder, sample_name,
+                           CURRENT_EXPERIMENT['pdf_subfolder']]))
+    except FileExistsError:
+        pass
     log.info("experiment started at {}".format(path_to_experiment_folder))
 
     loc_provider = qc.FormatLocation(
@@ -289,7 +293,10 @@ def _save_individual_plots(data, inst_meas, display_plot=True):
             plot.subplots[0].set_title(title + rasterized_note)
         else:
             plot.subplots[0].set_title(title)
-        plot.save("{}_{:03d}.pdf".format(plot.get_default_title(),
+        title_list = plot.get_default_title().split(sep)
+        title_list.insert(-1 , CURRENT_EXPERIMENT['pdf_subfolder'])
+        title = sep.join(title_list)
+        plot.save("{}_{:03d}.pdf".format(title,
                                          counter_two))
         if display_plot:
             plot.fig.canvas.draw()
@@ -416,7 +423,10 @@ def _do_measurement(loop: Loop, set_params: tuple, meas_params: tuple,
         # pad a bit more to prevent overlap between
         # suptitle and title
         pdfplot.fig.tight_layout(pad=3)
-        pdfplot.save("{}.pdf".format(plot.get_default_title()))
+        title_list = plot.get_default_title().split(sep)
+        title_list.insert(-1 , CURRENT_EXPERIMENT['pdf_subfolder'])
+        title = sep.join(title_list)
+        pdfplot.save("{}.pdf".format(title))
         if pdfdisplay['combined'] or (num_subplots == 1 and pdfdisplay['individual']):
             pdfplot.fig.canvas.draw()
             plt.show()
