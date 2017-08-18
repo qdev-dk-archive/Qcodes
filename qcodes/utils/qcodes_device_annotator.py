@@ -205,6 +205,9 @@ class MakeDeviceImage(qt.QWidget):
         # Now forget about the original
         self.filename = rawpath
 
+        datafilename = os.path.join(self.folder, 'deviceimage_annotations.json')
+        with open(datafilename, 'w') as fid:
+            json.dump(self._data, fid)
         self.close()
 
     @staticmethod
@@ -322,11 +325,8 @@ class DeviceImage:
         else:
             app = qt.QApplication.instance()
         imagedrawer = MakeDeviceImage(self.folder, self.station)
+        print("Please annotate device image")
         app.exec_()
-        imagedrawer.close()
-        self._data = imagedrawer._data
-        self.filename = imagedrawer.filename
-        self.saveAnnotations()
 
     def saveAnnotations(self):
         """
