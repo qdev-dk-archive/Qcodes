@@ -324,7 +324,7 @@ class DeviceImage:
             app = qt.QApplication(sys.argv)
         else:
             app = qt.QApplication.instance()
-        imagedrawer = MakeDeviceImage(self.folder, self.station)
+        self.imagedrawer = MakeDeviceImage(self.folder, self.station)
         print("Please annotate device image")
         app.exec_()
 
