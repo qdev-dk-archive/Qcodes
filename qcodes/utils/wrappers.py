@@ -15,6 +15,7 @@ from qcodes.plots.pyqtgraph import QtPlot
 from qcodes.plots.qcmatplotlib import MatPlot
 from qcodes.instrument.visa import VisaInstrument
 from qcodes.utils.qcodes_device_annotator import DeviceImage
+from qcodes.utils.helpers import forground_qt_window
 
 from matplotlib import ticker
 from IPython import get_ipython
@@ -220,6 +221,7 @@ def _plot_setup(data, inst_meas, useQT=True, startranges=None):
                                           tdict[whatwhere[setarr.label]])
                     (rmin, rmax) = startranges[setarr.label]
                     rangesetter(rmin, rmax)
+            QtPlot.qc_helpers.forground_qt_window(plot.win)
 
         else:
             if 'z' in inst_meta_data:
