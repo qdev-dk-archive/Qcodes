@@ -350,6 +350,7 @@ def save_device_image(sweeptparameters):
     counter = CURRENT_EXPERIMENT['provider'].counter
     title = "{} #{:03d}".format(CURRENT_EXPERIMENT["sample_name"], counter)
     di = CURRENT_EXPERIMENT['device_image']
+    status = True
     if di.filename == None:
         status = di.loadAnnotations()
 
