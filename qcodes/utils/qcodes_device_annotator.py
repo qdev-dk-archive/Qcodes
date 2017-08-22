@@ -303,7 +303,7 @@ class MakeDeviceImage(qt.QWidget):
                     if paramsettings.get('labelstring'):
                         label_string = paramsettings.get('labelstring')
                     else:
-                        label_string = "{}_{} ".format(instrument, parameter)
+                        label_string = "{}_{} ".format(key, val)
                     if paramsettings.get('update'):
                         #parameters that are sweeped should be red.
                         painter.setBrush(gui.QColor(255, 0, 0, 100))
