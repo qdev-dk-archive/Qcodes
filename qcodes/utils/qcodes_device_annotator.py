@@ -11,7 +11,7 @@ import PyQt5.QtCore as core
 from shutil import copyfile
 import copy
 from qcodes.instrument.channel import ChannelList
-from qcodes.utils.helpers import forground_qt_window
+from qcodes.utils.helpers import foreground_qt_window
 
 class MakeDeviceImage(qt.QWidget):
     """
@@ -90,7 +90,7 @@ class MakeDeviceImage(qt.QWidget):
         self.setWindowTitle('Generate annotated device image')
         self.show()
         self.raise_()
-        forground_qt_window(self)
+        foreground_qt_window(self)
 
     def select_font(self):
 
