@@ -437,7 +437,7 @@ def do1d(inst_set, start, stop, num_points, delay, *inst_meas, do_plots=True,
     plot, data = _do_measurement(loop, set_params, meas_params,
                                  do_plots=do_plots, use_threads=use_threads)
     stop = time.perf_counter()
-    log.info("running do1D took {} s at {} per point".format(stop-start, (stop-start)/num_points))
+    log.info("running do1D took {:.6f} s at {:.6f} s per point".format(stop-start, (stop-start)/num_points))
     return plot, data
 
 
@@ -534,7 +534,7 @@ def do2d(inst_set, start, stop, num_points, delay,
     plot, data = _do_measurement(outerloop, set_params, meas_params,
                                  do_plots=do_plots, use_threads=use_threads)
     stop = time.perf_counter()
-    log.info("running do2D took {} s at {} s per line and {} s per point".format(stop-start,
+    log.info("running do2D took {:.6f} s at {:.6f} s per line and {:.6f} s per point".format(stop-start,
              (stop-start)/num_points, (stop-start)/(num_points*num_points2)))
     return plot, data
 
