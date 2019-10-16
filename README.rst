@@ -1,3 +1,5 @@
+**This is an abandoned fork of QCoDeS. Please use QCoDeS from https://github.com/qcodes/qcodes**
+
 QCoDeS |Build Status| |DOCS| |DOI|
 ===================================
 
